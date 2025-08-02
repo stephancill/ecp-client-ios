@@ -202,37 +202,31 @@ class CommentsService: ObservableObject {
                 self?.isRefreshing = false
                 
                 if let error = error {
-                    print("CommentsService: Network error: \(error)")
                     self?.errorMessage = "Network error: \(error.localizedDescription)"
                     return
                 }
                 
                 guard let data = data else {
-                    print("CommentsService: No data received")
                     self?.errorMessage = "No data received"
                     return
                 }
                 
                 do {
                     let commentsResponse = try JSONDecoder().decode(CommentsResponse.self, from: data)
-                    print("CommentsService: Successfully decoded \(commentsResponse.results.count) comments")
                     
                     if self?.isRefreshing == true || self?.comments.isEmpty == true {
                         self?.comments = commentsResponse.results
-                        print("CommentsService: Set comments array to \(commentsResponse.results.count) items")
                     } else {
                         // Append new comments, avoiding duplicates
                         let newComments = commentsResponse.results.filter { newComment in
                             !(self?.comments.contains { $0.id == newComment.id } ?? false)
                         }
                         self?.comments.append(contentsOf: newComments)
-                        print("CommentsService: Appended \(newComments.count) new comments, total now: \(self?.comments.count ?? 0)")
                     }
                     
                     self?.currentPagination = commentsResponse.pagination
                     self?.endCursor = commentsResponse.pagination.hasNext ? commentsResponse.pagination.endCursor : nil
                 } catch {
-                    print("CommentsService: Decode error: \(error)")
                     self?.errorMessage = "Failed to decode data: \(error.localizedDescription)"
                 }
             }
@@ -254,7 +248,6 @@ class CommentsService: ObservableObject {
             let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&excludeByModerationLabels=spam%2Csexual&limit=20&sort=desc&mode=nested&author=\(address)"
             url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
         }
-        print("CommentsService: Fetching URL: \(url)")
         return url
     }
     
@@ -270,10 +263,13 @@ class CommentsService: ObservableObject {
     }
 }
 
+
+
 // MARK: - Views
 struct ContentView: View {
     @StateObject private var commentsService = CommentsService()
     @State private var showingComposeModal = false
+    @State private var showingSettingsModal = false
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
@@ -354,6 +350,18 @@ struct ContentView: View {
             .navigationTitle("Comments")
             .navigationBarTitleDisplayMode(.large)
             .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.impactOccurred()
+                        showingSettingsModal = true
+                    }) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 18, weight: .medium))
+                    }
+                }
+            }
         }
         .overlay(
             // Floating Action Button
@@ -382,6 +390,11 @@ struct ContentView: View {
         .sheet(isPresented: $showingComposeModal) {
             ComposeCommentView()
                 .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showingSettingsModal) {
+            SettingsView()
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
         .onAppear {
