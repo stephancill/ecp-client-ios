@@ -1,0 +1,46 @@
+---
+globs: *.swift
+description: ECP Client Project Structure
+---
+
+# ECP Client Project Structure
+
+## Main App Files
+
+- [ecp_clientApp.swift](mdc:ecp-client/ecp_clientApp.swift) - Main app entry point
+- [ContentView.swift](mdc:ecp-client/ContentView.swift) - Primary content view with comment list
+
+## Comment System Components
+
+- [CommentRowView.swift](mdc:ecp-client/CommentRowView.swift) - Individual comment display
+- [ComposeCommentView.swift](mdc:ecp-client/ComposeCommentView.swift) - Comment creation interface
+- [RepliesView.swift](mdc:ecp-client/RepliesView.swift) - Replies modal view
+
+## Content Parsing & Display
+
+- [ContentParser.swift](mdc:ecp-client/ContentParser.swift) - Content parsing logic for addresses, tokens, URLs
+- [ParsedContentView.swift](mdc:ecp-client/ParsedContentView.swift) - Parsed content display with clickable elements
+
+## UI Components
+
+- [BlockiesAvatarView.swift](mdc:ecp-client/BlockiesAvatarView.swift) - Avatar component with blockies generation
+- [ReferenceChip.swift](mdc:ecp-client/ReferenceChip.swift) - Reference chips for links, tokens, etc.
+- [CommentSkeletonView.swift](mdc:ecp-client/CommentSkeletonView.swift) - Loading skeleton with shimmer effect
+- [UserDetailView.swift](mdc:ecp-client/UserDetailView.swift) - User profile detail view
+
+## Utilities
+
+- [Blockies.swift](mdc:ecp-client/Blockies.swift) - Blockies generation for Ethereum addresses
+
+## Assets
+
+- [Assets.xcassets](mdc:ecp-client/Assets.xcassets) - App icons and colors
+- [Preview Content](mdc:ecp-client/Preview Content) - SwiftUI preview assets
+
+## Architecture Notes
+
+- Follows SwiftUI best practices with separated concerns
+- Uses `@StateObject` for observable services
+- Implements proper state management with `@State`, `@ObservedObject`
+- Components are modular and reusable
+- Supports both light and dark mode with `@Environment(\.colorScheme)`
