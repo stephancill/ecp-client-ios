@@ -1,6 +1,5 @@
 ---
-globs: *.swift
-description: ECP Client Project Structure
+alwaysApply: true
 ---
 
 # ECP Client Project Structure
