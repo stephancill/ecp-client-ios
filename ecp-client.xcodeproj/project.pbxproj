@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D4BEED912E3EB3EB00A45974 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED902E3EB3EB00A45974 /* SettingsView.swift */; };
 		D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2A72E3E205A002B087F /* ecp_clientApp.swift */; };
 		D4C7B2AA2E3E205A002B087F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2A92E3E205A002B087F /* ContentView.swift */; };
 		D4C7B2AC2E3E205C002B087F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4C7B2AB2E3E205C002B087F /* Assets.xcassets */; };
@@ -19,12 +20,16 @@
 		D4C7B2CB2E3E9DD8002B087F /* CommentSkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C52E3E9DD8002B087F /* CommentSkeletonView.swift */; };
 		D4C7B2CC2E3E9DD8002B087F /* ReferenceChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */; };
 		D4C7B2CD2E3E9DD8002B087F /* RepliesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C72E3E9DD8002B087F /* RepliesView.swift */; };
-
 		D4C7B2CF2E3E9DD8002B087F /* CommentRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C92E3E9DD8002B087F /* CommentRowView.swift */; };
 		D4C7B2D02E3E9DD8002B087F /* ParsedContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */; };
+		D4C7B2D32E3EACF7002B087F /* Web3 in Frameworks */ = {isa = PBXBuildFile; productRef = D4C7B2D22E3EACF7002B087F /* Web3 */; };
+		D4C7B2D52E3EACF7002B087F /* Web3ContractABI in Frameworks */ = {isa = PBXBuildFile; productRef = D4C7B2D42E3EACF7002B087F /* Web3ContractABI */; };
+		D4C7B2D72E3EACF7002B087F /* Web3PromiseKit in Frameworks */ = {isa = PBXBuildFile; productRef = D4C7B2D62E3EACF7002B087F /* Web3PromiseKit */; };
+		D4C7B2D92E3EAFD9002B087F /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D4BEED902E3EB3EB00A45974 /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D4C7B2A42E3E205A002B087F /* ecp-client.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ecp-client.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D4C7B2A72E3E205A002B087F /* ecp_clientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ecp_clientApp.swift; sourceTree = "<group>"; };
 		D4C7B2A92E3E205A002B087F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -38,9 +43,9 @@
 		D4C7B2C52E3E9DD8002B087F /* CommentSkeletonView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentSkeletonView.swift; sourceTree = "<group>"; };
 		D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferenceChip.swift; sourceTree = "<group>"; };
 		D4C7B2C72E3E9DD8002B087F /* RepliesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RepliesView.swift; sourceTree = "<group>"; };
-
 		D4C7B2C92E3E9DD8002B087F /* CommentRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentRowView.swift; sourceTree = "<group>"; };
 		D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ParsedContentView.swift; sourceTree = "<group>"; };
+		D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,6 +53,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4C7B2D52E3EACF7002B087F /* Web3ContractABI in Frameworks */,
+				D4C7B2D72E3EACF7002B087F /* Web3PromiseKit in Frameworks */,
+				D4C7B2D32E3EACF7002B087F /* Web3 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,9 +87,10 @@
 				D4C7B2B82E3E2C62002B087F /* ComposeCommentView.swift */,
 				D4C7B2C92E3E9DD8002B087F /* CommentRowView.swift */,
 				D4C7B2C52E3E9DD8002B087F /* CommentSkeletonView.swift */,
-
 				D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */,
+				D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */,
 				D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */,
+				D4BEED902E3EB3EB00A45974 /* SettingsView.swift */,
 				D4C7B2C72E3E9DD8002B087F /* RepliesView.swift */,
 				D4C7B2C12E3E9DB5002B087F /* BlockiesAvatarView.swift */,
 				D4C7B2C32E3E9DBB002B087F /* ContentParser.swift */,
@@ -117,6 +126,9 @@
 			);
 			name = "ecp-client";
 			packageProductDependencies = (
+				D4C7B2D22E3EACF7002B087F /* Web3 */,
+				D4C7B2D42E3EACF7002B087F /* Web3ContractABI */,
+				D4C7B2D62E3EACF7002B087F /* Web3PromiseKit */,
 			);
 			productName = "ecp-client";
 			productReference = D4C7B2A42E3E205A002B087F /* ecp-client.app */;
@@ -147,6 +159,7 @@
 			);
 			mainGroup = D4C7B29B2E3E205A002B087F;
 			packageReferences = (
+				D4C7B2D12E3EACF7002B087F /* XCRemoteSwiftPackageReference "Web3.swift" */,
 			);
 			productRefGroup = D4C7B2A52E3E205A002B087F /* Products */;
 			projectDirPath = "";
@@ -174,18 +187,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4C7B2D92E3EAFD9002B087F /* KeychainManager.swift in Sources */,
 				D4C7B2CF2E3E9DD8002B087F /* CommentRowView.swift in Sources */,
 				D4C7B2AA2E3E205A002B087F /* ContentView.swift in Sources */,
 				D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */,
 				D4C7B2CB2E3E9DD8002B087F /* CommentSkeletonView.swift in Sources */,
 				D4C7B2CD2E3E9DD8002B087F /* RepliesView.swift in Sources */,
 				D4C7B2CC2E3E9DD8002B087F /* ReferenceChip.swift in Sources */,
+				D4BEED912E3EB3EB00A45974 /* SettingsView.swift in Sources */,
 				D4C7B2BE2E3E3BA6002B087F /* Blockies.swift in Sources */,
 				D4C7B2C22E3E9DB5002B087F /* BlockiesAvatarView.swift in Sources */,
 				D4C7B2D02E3E9DD8002B087F /* ParsedContentView.swift in Sources */,
 				D4C7B2C02E3E67D9002B087F /* UserDetailView.swift in Sources */,
 				D4C7B2C42E3E9DBB002B087F /* ContentParser.swift in Sources */,
-
 				D4C7B2B92E3E2C62002B087F /* ComposeCommentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -392,6 +406,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D4C7B2D12E3EACF7002B087F /* XCRemoteSwiftPackageReference "Web3.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Boilertalk/Web3.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.8.8;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D4C7B2D22E3EACF7002B087F /* Web3 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D4C7B2D12E3EACF7002B087F /* XCRemoteSwiftPackageReference "Web3.swift" */;
+			productName = Web3;
+		};
+		D4C7B2D42E3EACF7002B087F /* Web3ContractABI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D4C7B2D12E3EACF7002B087F /* XCRemoteSwiftPackageReference "Web3.swift" */;
+			productName = Web3ContractABI;
+		};
+		D4C7B2D62E3EACF7002B087F /* Web3PromiseKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D4C7B2D12E3EACF7002B087F /* XCRemoteSwiftPackageReference "Web3.swift" */;
+			productName = Web3PromiseKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D4C7B29C2E3E205A002B087F /* Project object */;
 }
