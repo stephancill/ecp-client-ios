@@ -11,6 +11,9 @@
 		D4C7B2AA2E3E205A002B087F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2A92E3E205A002B087F /* ContentView.swift */; };
 		D4C7B2AC2E3E205C002B087F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4C7B2AB2E3E205C002B087F /* Assets.xcassets */; };
 		D4C7B2AF2E3E205C002B087F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4C7B2AE2E3E205C002B087F /* Preview Assets.xcassets */; };
+		D4C7B2B72E3E2775002B087F /* SkeletonView in Frameworks */ = {isa = PBXBuildFile; productRef = D4C7B2B62E3E2775002B087F /* SkeletonView */; };
+		D4C7B2B92E3E2C62002B087F /* ComposeCommentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2B82E3E2C62002B087F /* ComposeCommentView.swift */; };
+		D4C7B2BB2E3E33E8002B087F /* CommentViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2BA2E3E33E8002B087F /* CommentViews.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +22,8 @@
 		D4C7B2A92E3E205A002B087F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D4C7B2AB2E3E205C002B087F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D4C7B2AE2E3E205C002B087F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		D4C7B2B82E3E2C62002B087F /* ComposeCommentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeCommentView.swift; sourceTree = "<group>"; };
+		D4C7B2BA2E3E33E8002B087F /* CommentViews.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -26,6 +31,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4C7B2B72E3E2775002B087F /* SkeletonView in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,6 +59,8 @@
 			children = (
 				D4C7B2A72E3E205A002B087F /* ecp_clientApp.swift */,
 				D4C7B2A92E3E205A002B087F /* ContentView.swift */,
+				D4C7B2BA2E3E33E8002B087F /* CommentViews.swift */,
+				D4C7B2B82E3E2C62002B087F /* ComposeCommentView.swift */,
 				D4C7B2AB2E3E205C002B087F /* Assets.xcassets */,
 				D4C7B2AD2E3E205C002B087F /* Preview Content */,
 			);
@@ -83,6 +91,9 @@
 			dependencies = (
 			);
 			name = "ecp-client";
+			packageProductDependencies = (
+				D4C7B2B62E3E2775002B087F /* SkeletonView */,
+			);
 			productName = "ecp-client";
 			productReference = D4C7B2A42E3E205A002B087F /* ecp-client.app */;
 			productType = "com.apple.product-type.application";
@@ -111,6 +122,9 @@
 				Base,
 			);
 			mainGroup = D4C7B29B2E3E205A002B087F;
+			packageReferences = (
+				D4C7B2B52E3E2775002B087F /* XCRemoteSwiftPackageReference "SkeletonView" */,
+			);
 			productRefGroup = D4C7B2A52E3E205A002B087F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -139,6 +153,8 @@
 			files = (
 				D4C7B2AA2E3E205A002B087F /* ContentView.swift in Sources */,
 				D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */,
+				D4C7B2BB2E3E33E8002B087F /* CommentViews.swift in Sources */,
+				D4C7B2B92E3E2C62002B087F /* ComposeCommentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -344,6 +360,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D4C7B2B52E3E2775002B087F /* XCRemoteSwiftPackageReference "SkeletonView" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Juanpe/SkeletonView.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.31.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D4C7B2B62E3E2775002B087F /* SkeletonView */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D4C7B2B52E3E2775002B087F /* XCRemoteSwiftPackageReference "SkeletonView" */;
+			productName = SkeletonView;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D4C7B29C2E3E205A002B087F /* Project object */;
 }
