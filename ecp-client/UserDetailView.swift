@@ -144,7 +144,7 @@ struct UserDetailView: View {
                             Spacer()
                         }
                         .padding(.horizontal, 20)
-                        if commentsService.isLoading && commentsService.comments.isEmpty {
+                        if commentsService.comments.isEmpty {
                             VStack(spacing: 0) {
                                 ForEach(0..<5, id: \.self) { _ in
                                     CommentSkeletonView()
@@ -216,7 +216,6 @@ struct UserDetailView: View {
                                     .padding(.vertical, 8)
                                 }
                             }
-                            .padding(.horizontal, 20)
 
                         }
                     }
