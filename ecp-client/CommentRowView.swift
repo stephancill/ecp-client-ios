@@ -259,9 +259,6 @@ struct CommentRowView: View {
     }
     
     private func truncateAddress(_ address: String) -> String {
-        guard address.count > 10 else { return address }
-        let prefix = String(address.prefix(6))  // 0x1234
-        let suffix = String(address.suffix(4))  // abcd
-        return "\(prefix)...\(suffix)"
+        return Utils.truncateAddress(address)
     }
 } 
