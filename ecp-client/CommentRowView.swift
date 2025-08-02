@@ -47,8 +47,8 @@ struct CommentRowView: View {
         var seenIdentifiers: Set<String> = []
         
         for reference in comment.references {
-            // Skip farcaster references as they're now shown inline
-            if reference.type == "farcaster" {
+            // Skip farcaster and ENS references as they're now shown inline
+            if reference.type == "farcaster" || reference.type == "ens" {
                 continue
             }
             
