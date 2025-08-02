@@ -107,28 +107,46 @@ struct Extra: Codable {
     let moderationKnownReactions: [String]
 }
 
-// MARK: - Network Service
+// MARK: - Generic Comments Service
 class CommentsService: ObservableObject {
     @Published var comments: [Comment] = []
     @Published var isLoading = false
     @Published var isLoadingMore = false
+    @Published var isRefreshing = false
     @Published var errorMessage: String?
     
     private var currentPagination: Pagination?
     private var endCursor: String?
+    private let serviceType: ServiceType
+    private let parentCommentId: String?
+    
+    enum ServiceType {
+        case mainComments
+        case replies(parentId: String)
+    }
+    
+    init(serviceType: ServiceType = .mainComments) {
+        self.serviceType = serviceType
+        switch serviceType {
+        case .mainComments:
+            self.parentCommentId = nil
+        case .replies(let parentId):
+            self.parentCommentId = parentId
+        }
+    }
     
     func fetchComments(refresh: Bool = false) {
         if refresh {
-            comments = []
+            isRefreshing = true
             endCursor = nil
             currentPagination = nil
+        } else {
+            isLoading = comments.isEmpty
         }
         
-        isLoading = refresh || comments.isEmpty
         errorMessage = nil
         
-        let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&excludeByModerationLabels=spam%2Csexual&limit=20&sort=desc&mode=nested"
-        let urlString = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
+        let urlString = buildURL()
         
         guard let url = URL(string: urlString) else {
             errorMessage = "Invalid URL"
@@ -143,6 +161,7 @@ class CommentsService: ObservableObject {
             DispatchQueue.main.async {
                 self?.isLoading = false
                 self?.isLoadingMore = false
+                self?.isRefreshing = false
                 
                 if let error = error {
                     self?.errorMessage = "Network error: \(error.localizedDescription)"
@@ -157,7 +176,7 @@ class CommentsService: ObservableObject {
                 do {
                     let commentsResponse = try JSONDecoder().decode(CommentsResponse.self, from: data)
                     
-                    if refresh || self?.comments.isEmpty == true {
+                    if self?.isRefreshing == true || self?.comments.isEmpty == true {
                         self?.comments = commentsResponse.results
                     } else {
                         // Append new comments, avoiding duplicates
@@ -174,6 +193,18 @@ class CommentsService: ObservableObject {
                 }
             }
         }.resume()
+    }
+    
+    private func buildURL() -> String {
+        switch serviceType {
+        case .mainComments:
+            let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&excludeByModerationLabels=spam%2Csexual&limit=20&sort=desc&mode=nested"
+            return endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
+            
+        case .replies(let parentId):
+            let baseURL = "https://api.ethcomments.xyz/api/comments/\(parentId)/replies?chainId=8453&limit=20"
+            return endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
+        }
     }
     
     func loadMoreCommentsIfNeeded() {
@@ -197,8 +228,8 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack {
-                if commentsService.isLoading && commentsService.comments.isEmpty {
-                    // Show skeleton views during initial load
+                if commentsService.isLoading && commentsService.comments.isEmpty && !commentsService.isRefreshing {
+                    // Show skeleton views only during initial load when no data exists (not during refresh)
                     List {
                         ForEach(0..<8, id: \.self) { _ in
                             CommentSkeletonView()
@@ -329,14 +360,6 @@ struct ContentView: View {
         }
     }
 }
-
-
-
-
-
-
-
-
 
 
 #Preview {

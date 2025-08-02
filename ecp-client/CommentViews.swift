@@ -44,6 +44,7 @@ enum ContentSegment: Identifiable {
     case text(String)
     case ethereumAddress(String)
     case eip155Token(chainId: String, tokenAddress: String, reference: Reference?)
+    case url(String)
     
     var id: String {
         switch self {
@@ -53,6 +54,8 @@ enum ContentSegment: Identifiable {
             return "address_\(address)"
         case .eip155Token(let chainId, let tokenAddress, _):
             return "token_\(chainId)_\(tokenAddress)"
+        case .url(let url):
+            return "url_\(url)"
         }
     }
 }
@@ -68,10 +71,12 @@ struct ContentParser {
         // Regex patterns
         let ethAddressPattern = #"0x[a-fA-F0-9]{40}"#
         let eip155Pattern = #"eip155:(\d+)/erc20:(0x[a-fA-F0-9]{40})"#
+        let urlPattern = #"https?://[^\s]+"#
         
         // Create regex objects
         guard let ethRegex = try? NSRegularExpression(pattern: ethAddressPattern),
-              let eip155Regex = try? NSRegularExpression(pattern: eip155Pattern) else {
+              let eip155Regex = try? NSRegularExpression(pattern: eip155Pattern),
+              let urlRegex = try? NSRegularExpression(pattern: urlPattern) else {
             return [.text(trimmedContent)]
         }
         
@@ -101,6 +106,13 @@ struct ContentParser {
         eip155Regex.enumerateMatches(in: trimmedContent, range: fullRange) { match, _, _ in
             if let matchRange = match?.range {
                 allMatches.append((range: matchRange, type: "eip155"))
+            }
+        }
+        
+        // Find URLs
+        urlRegex.enumerateMatches(in: trimmedContent, range: fullRange) { match, _, _ in
+            if let matchRange = match?.range {
+                allMatches.append((range: matchRange, type: "url"))
             }
         }
         
@@ -154,6 +166,8 @@ struct ContentParser {
                     
                     segments.append(.eip155Token(chainId: chainId, tokenAddress: tokenAddress, reference: matchingReference))
                 }
+            } else if match.type == "url" {
+                segments.append(.url(matchedText))
             }
             
             lastEndIndex = match.range.location + match.range.length
@@ -262,6 +276,12 @@ struct ParsedContentView: View {
                 tokenAttr.foregroundColor = .blue
                 tokenAttr.underlineStyle = .single
                 result += tokenAttr
+                
+            case .url(let url):
+                var urlAttr = AttributedString(url)
+                urlAttr.foregroundColor = .blue
+                urlAttr.underlineStyle = .single
+                result += urlAttr
             }
         }
         
@@ -296,6 +316,17 @@ struct ParsedContentView: View {
                     .underline()
             }
             .buttonStyle(.plain)
+            
+        case .url(let url):
+            Button(action: {
+                openURL(url: url)
+            }) {
+                Text(url)
+                    .font(.body)
+                    .foregroundColor(.blue)
+                    .underline()
+            }
+            .buttonStyle(.plain)
         }
     }
     
@@ -324,26 +355,17 @@ struct ParsedContentView: View {
         }
     }
     
-    private func openBlockscan(chainId: String, tokenAddress: String) {
-        // Map chain IDs to their respective block explorers
-        let explorerURL: String
-        switch chainId {
-        case "1":
-            explorerURL = "https://etherscan.io/token/\(tokenAddress)"
-        case "8453":
-            explorerURL = "https://basescan.org/token/\(tokenAddress)"
-        case "137":
-            explorerURL = "https://polygonscan.com/token/\(tokenAddress)"
-        case "10":
-            explorerURL = "https://optimistic.etherscan.io/token/\(tokenAddress)"
-        case "42161":
-            explorerURL = "https://arbiscan.io/token/\(tokenAddress)"
-        default:
-            explorerURL = "https://basescan.org/token/\(tokenAddress)" // Default to Basescan
-        }
+    private func openBlockscan(chainId _: String, tokenAddress: String) {
+        let explorerURL: String = "https://blockscan.com/address/\(tokenAddress)"
         
         if let url = URL(string: explorerURL) {
             UIApplication.shared.open(url)
+        }
+    }
+    
+    private func openURL(url: String) {
+        if let urlObject = URL(string: url) {
+            UIApplication.shared.open(urlObject)
         }
     }
 }
@@ -351,8 +373,15 @@ struct ParsedContentView: View {
 // MARK: - Comment Row View
 struct CommentRowView: View {
     let comment: Comment
+    let showRepliesButton: Bool
     @State private var isExpanded = false
+    @State private var showingRepliesSheet = false
     @Environment(\.colorScheme) private var colorScheme
+    
+    init(comment: Comment, showRepliesButton: Bool = true) {
+        self.comment = comment
+        self.showRepliesButton = showRepliesButton
+    }
     
     // Constants for text truncation
     private let maxLines = 4
@@ -361,6 +390,22 @@ struct CommentRowView: View {
     // Computed property for trimmed content
     private var trimmedContent: String {
         return comment.content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    // Computed property for deduplicated references
+    private var deduplicatedReferences: [Reference] {
+        var uniqueReferences: [Reference] = []
+        var seenIdentifiers: Set<String> = []
+        
+        for reference in comment.references {
+            let identifier = getReferenceIdentifier(reference)
+            if !seenIdentifiers.contains(identifier) {
+                seenIdentifiers.insert(identifier)
+                uniqueReferences.append(reference)
+            }
+        }
+        
+        return uniqueReferences
     }
     
     var body: some View {
@@ -386,10 +431,6 @@ struct CommentRowView: View {
                                 Circle()
                                     .fill(Color.gray.opacity(0.3))
                                     .frame(width: 40, height: 40)
-                                    .overlay(
-                                        ProgressView()
-                                            .scaleEffect(0.6)
-                                    )
                             @unknown default:
                                 BlockiesAvatarView(address: comment.author.address, size: 40)
                             }
@@ -401,7 +442,7 @@ struct CommentRowView: View {
                 }
                 
                 VStack(alignment: .leading) {
-                    if let username = comment.author.farcaster?.username {
+                    if let username = comment.author.farcaster?.username, !username.hasPrefix("!") {
                         Text(username)
                             .font(.headline)
                             .fontWeight(.semibold)
@@ -449,11 +490,11 @@ struct CommentRowView: View {
             }
             
             // References (links, tokens, etc.)
-            if !comment.references.isEmpty {
+            if !deduplicatedReferences.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
-                        ForEach(comment.references.indices, id: \.self) { index in
-                            let reference = comment.references[index]
+                        ForEach(deduplicatedReferences.indices, id: \.self) { index in
+                            let reference = deduplicatedReferences[index]
                             ReferenceChip(reference: reference)
                         }
                     }
@@ -479,14 +520,19 @@ struct CommentRowView: View {
                 
                 Spacer()
                 
-                if let replies = comment.replies, !replies.results.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrowshape.turn.up.left")
-                            .font(.caption)
-                        Text("\(replies.results.count)")
-                            .font(.caption)
+                if showRepliesButton, let replies = comment.replies, !replies.results.isEmpty {
+                    Button(action: {
+                        showingRepliesSheet = true
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrowshape.turn.up.left")
+                                .font(.caption)
+                            Text("\(replies.results.count)")
+                                .font(.caption)
+                        }
+                        .foregroundColor(.blue)
                     }
-                    .foregroundColor(.blue)
+                    .buttonStyle(.plain)
                 }
             }
             
@@ -499,11 +545,52 @@ struct CommentRowView: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
         .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
+        .sheet(isPresented: $showingRepliesSheet) {
+            RepliesView(parentComment: comment)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
     }
     
     // Computed property to determine if we should show the "Show more" button
     private var shouldShowMoreButton: Bool {
         return trimmedContent.count > 200 || trimmedContent.components(separatedBy: "\n").count > maxLines
+    }
+    
+    // Helper function to create unique identifiers for references
+    private func getReferenceIdentifier(_ reference: Reference) -> String {
+        switch reference.type {
+        case "erc20":
+            // For ERC20 tokens, use address + chainId to identify uniqueness
+            let address = reference.address?.lowercased() ?? ""
+            let chainId = reference.chainId ?? 0
+            return "erc20_\(address)_\(chainId)"
+            
+        case "webpage":
+            // For webpages, use the URL
+            return "webpage_\(reference.url ?? "")"
+            
+        case "ens":
+            // For ENS, use the name
+            return "ens_\(reference.name ?? "")"
+            
+        case "farcaster":
+            // For Farcaster, use username or fid
+            if let username = reference.username {
+                return "farcaster_username_\(username)"
+            } else if let fid = reference.fid {
+                return "farcaster_fid_\(fid)"
+            } else {
+                // Fallback for farcaster references without username or fid
+                let displayName = reference.displayName ?? ""
+                return "farcaster_display_\(displayName)"
+            }
+            
+        default:
+            // For other types, create a general identifier
+            let name = reference.name ?? reference.title ?? reference.symbol ?? ""
+            return "\(reference.type)_\(name)"
+        }
     }
     
     private func truncateAddress(_ address: String) -> String {
@@ -525,6 +612,10 @@ struct ReferenceChip: View {
             
             if let symbol = reference.symbol, reference.type == "erc20" {
                 Text("$\(symbol)")
+                    .font(.caption)
+                    .lineLimit(1)
+            } else if reference.type == "farcaster", let username = reference.username {
+                Text("@\(username)")
                     .font(.caption)
                     .lineLimit(1)
             } else if let title = reference.title {
@@ -723,4 +814,103 @@ extension View {
     func shimmering(isAnimating: Bool) -> some View {
         self.modifier(ShimmerModifier(isAnimating: isAnimating))
     }
-} 
+}
+
+// MARK: - Replies View
+struct RepliesView: View {
+    let parentComment: Comment
+    @StateObject private var repliesService: CommentsService
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
+    
+    init(parentComment: Comment) {
+        self.parentComment = parentComment
+        self._repliesService = StateObject(wrappedValue: CommentsService(serviceType: .replies(parentId: parentComment.id)))
+    }
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                if repliesService.isLoading && repliesService.comments.isEmpty {
+                    // Show skeleton views during initial load
+                    List {
+                        ForEach(0..<8, id: \.self) { _ in
+                            CommentSkeletonView()
+                                .listRowInsets(EdgeInsets())
+                                .listRowSeparator(.hidden)
+                        }
+                    }
+                    .listStyle(.plain)
+                    .disabled(true)
+                } else if let errorMessage = repliesService.errorMessage {
+                    VStack {
+                        Image(systemName: "exclamationmark.triangle")
+                            .foregroundColor(.orange)
+                            .font(.largeTitle)
+                        Text("Error")
+                            .font(.headline)
+                        Text(errorMessage)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                        Button("Retry") {
+                            repliesService.fetchComments(refresh: true)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                } else if repliesService.comments.isEmpty {
+                    VStack {
+                        Image(systemName: "bubble.left")
+                            .foregroundColor(.gray)
+                            .font(.largeTitle)
+                        Text("No replies yet")
+                            .font(.headline)
+                        Text("Be the first to reply!")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    List {
+                        // Replies using the same styling as main comments
+                        ForEach(repliesService.comments) { reply in
+                            CommentRowView(comment: reply, showRepliesButton: false)
+                                .listRowInsets(EdgeInsets())
+                                .listRowSeparator(.hidden)
+                                .onAppear {
+                                    // Load more when approaching the end
+                                    if reply.id == repliesService.comments.last?.id {
+                                        repliesService.loadMoreCommentsIfNeeded()
+                                    }
+                                }
+                        }
+                        
+                        // Loading indicator at bottom
+                        if repliesService.isLoadingMore {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                Spacer()
+                            }
+                            .padding(.vertical, 8)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                        }
+                    }
+                    .listStyle(.plain)
+                    .refreshable {
+                        repliesService.fetchComments(refresh: true)
+                    }
+                }
+            }
+            .navigationTitle("Replies")
+            .navigationBarTitleDisplayMode(.inline)
+            .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
+        }
+        .onAppear {
+            if repliesService.comments.isEmpty {
+                repliesService.fetchComments(refresh: true)
+            }
+        }
+    }
+}
