@@ -7,6 +7,38 @@
 
 import SwiftUI
 
+// MARK: - Blockies Avatar View
+struct BlockiesAvatarView: View {
+    let address: String
+    let size: CGFloat
+    
+    var body: some View {
+        if let blockiesImage = generateBlockiesImage(from: address, size: Int(size)) {
+            Image(uiImage: blockiesImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: size, height: size)
+                .clipShape(Circle())
+        } else {
+            // Fallback to the original placeholder
+            Circle()
+                .fill(Color.gray.opacity(0.3))
+                .overlay(
+                    Image(systemName: "person.fill")
+                        .foregroundColor(.gray)
+                )
+                .frame(width: size, height: size)
+        }
+    }
+    
+    private func generateBlockiesImage(from address: String, size: Int) -> UIImage? {
+        // Use a scale of 5 to get better quality for the 40pt size
+        let scale = max(5, size / 8)
+        let blockies = Blockies(seed: address.lowercased(), size: 8, scale: scale)
+        return blockies.createImage()
+    }
+}
+
 // MARK: - Comment Row View
 struct CommentRowView: View {
     let comment: Comment
@@ -21,20 +53,38 @@ struct CommentRowView: View {
         VStack(alignment: .leading, spacing: 12) {
             // Author section
             HStack {
-                AsyncImage(url: URL(string: comment.author.farcaster?.pfpUrl ?? comment.author.ens?.avatarUrl ?? "")) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay(
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.gray)
-                        )
+                Group {
+                    if let imageUrl = comment.author.farcaster?.pfpUrl ?? comment.author.ens?.avatarUrl,
+                       !imageUrl.isEmpty {
+                        AsyncImage(url: URL(string: imageUrl)) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 40, height: 40)
+                                    .clipShape(Circle())
+                            case .failure(_):
+                                // Image failed to load, show blockies
+                                BlockiesAvatarView(address: comment.author.address, size: 40)
+                            case .empty:
+                                // Loading state - show a simple placeholder
+                                Circle()
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(width: 40, height: 40)
+                                    .overlay(
+                                        ProgressView()
+                                            .scaleEffect(0.6)
+                                    )
+                            @unknown default:
+                                BlockiesAvatarView(address: comment.author.address, size: 40)
+                            }
+                        }
+                    } else {
+                        // No image URL available, show blockies immediately
+                        BlockiesAvatarView(address: comment.author.address, size: 40)
+                    }
                 }
-                .frame(width: 40, height: 40)
-                .clipShape(Circle())
                 
                 VStack(alignment: .leading) {
                     if let displayName = comment.author.farcaster?.displayName {
@@ -46,7 +96,7 @@ struct CommentRowView: View {
                             .font(.headline)
                             .fontWeight(.semibold)
                     } else {
-                        Text(String(comment.author.address.prefix(8)) + "...")
+                        Text(truncateAddress(comment.author.address))
                             .font(.headline)
                             .fontWeight(.semibold)
                     }
@@ -131,7 +181,14 @@ struct CommentRowView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.clear)
+        .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
+    }
+    
+    private func truncateAddress(_ address: String) -> String {
+        guard address.count > 10 else { return address }
+        let prefix = String(address.prefix(6))  // 0x1234
+        let suffix = String(address.suffix(4))  // abcd
+        return "\(prefix)...\(suffix)"
     }
 }
 
@@ -281,7 +338,7 @@ struct CommentSkeletonView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
-        .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.clear)
+        .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
         .onAppear {
             withAnimation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
                 isAnimating = true

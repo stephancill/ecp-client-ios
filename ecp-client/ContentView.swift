@@ -267,7 +267,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .background(colorScheme == .dark ? Color(.secondarySystemBackground) : Color.clear)
+            .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
         }
         .overlay(
             // Floating Action Button
