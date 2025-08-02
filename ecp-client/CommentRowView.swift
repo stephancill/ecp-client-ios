@@ -66,6 +66,8 @@ struct CommentRowView: View {
         VStack(alignment: .leading, spacing: 12) {
             // Author section
             Button(action: {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
                 showingUserDetailSheet = true
             }) {
                 HStack {
@@ -174,6 +176,8 @@ struct CommentRowView: View {
                 
                 if showRepliesButton, let replies = comment.replies, !replies.results.isEmpty {
                     Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.impactOccurred()
                         showingRepliesSheet = true
                     }) {
                         HStack(spacing: 4) {

@@ -138,6 +138,42 @@ class CommentsService: ObservableObject {
         }
     }
     
+    // Async version for SwiftUI's refreshable
+    @MainActor
+    func refreshComments() async {
+        isRefreshing = true
+        endCursor = nil
+        currentPagination = nil
+        errorMessage = nil
+        
+        let urlString = buildURL()
+        
+        guard let url = URL(string: urlString) else {
+            errorMessage = "Invalid URL"
+            isRefreshing = false
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "accept")
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            
+            let commentsResponse = try JSONDecoder().decode(CommentsResponse.self, from: data)
+            
+            self.comments = commentsResponse.results
+            
+            self.currentPagination = commentsResponse.pagination
+            self.endCursor = commentsResponse.pagination.hasNext ? commentsResponse.pagination.endCursor : nil
+            
+        } catch {
+            self.errorMessage = "Failed to refresh: \(error.localizedDescription)"
+        }
+        
+        isRefreshing = false
+    }
+    
     func fetchComments(refresh: Bool = false) {
         if refresh {
             isRefreshing = true
@@ -311,7 +347,7 @@ struct ContentView: View {
                     }
                     .listStyle(.plain)
                     .refreshable {
-                        commentsService.fetchComments(refresh: true)
+                        await commentsService.refreshComments()
                     }
                 }
             }
@@ -326,6 +362,8 @@ struct ContentView: View {
                 HStack {
                     Spacer()
                     Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.impactOccurred()
                         showingComposeModal = true
                     }) {
                         Image(systemName: "plus")

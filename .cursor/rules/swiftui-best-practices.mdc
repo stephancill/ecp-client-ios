@@ -1,6 +1,5 @@
 ---
-globs: *.swift
-description: Modern SwiftUI development best practices and patterns
+alwaysApply: true
 ---
 
 # SwiftUI Best Practices Guide
@@ -34,6 +33,7 @@ description: Modern SwiftUI development best practices and patterns
 - **Accessibility**: Add meaningful labels and ensure proper contrast
 - **Animations**: Use `.withAnimation()` for smooth state transitions
 - **Feedback**: Provide loading states, error messages, and success indicators
+- **Haptic feedback**: Add `.sensoryFeedback(.impact, trigger:)` to all buttons that open sheets
 
 ## 🔄 **Data Flow Best Practices**
 
