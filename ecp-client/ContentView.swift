@@ -61,6 +61,32 @@ struct Reference: Codable {
     let title: String?
     let symbol: String?
     let name: String?
+    // ERC20-specific fields
+    let address: String?
+    let decimals: Int?
+    let chainId: Int?
+    let logoURI: String?
+    let chains: [Chain]?
+    // Position information
+    let position: Position?
+    // Farcaster-specific fields
+    let fid: Int?
+    let fname: String?
+    let username: String?
+    let displayName: String?
+    let pfpUrl: String?
+    // ENS-specific fields
+    let avatarUrl: String?
+}
+
+struct Chain: Codable {
+    let caip: String
+    let chainId: Int
+}
+
+struct Position: Codable {
+    let start: Int
+    let end: Int
 }
 
 struct Replies: Codable {

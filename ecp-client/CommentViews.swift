@@ -39,6 +39,315 @@ struct BlockiesAvatarView: View {
     }
 }
 
+// MARK: - Parsed Content Models
+enum ContentSegment: Identifiable {
+    case text(String)
+    case ethereumAddress(String)
+    case eip155Token(chainId: String, tokenAddress: String, reference: Reference?)
+    
+    var id: String {
+        switch self {
+        case .text(let content):
+            return "text_\(content.hashValue)"
+        case .ethereumAddress(let address):
+            return "address_\(address)"
+        case .eip155Token(let chainId, let tokenAddress, _):
+            return "token_\(chainId)_\(tokenAddress)"
+        }
+    }
+}
+
+// MARK: - Content Parser
+struct ContentParser {
+    static func parseContent(_ content: String, references: [Reference]) -> [ContentSegment] {
+        var segments: [ContentSegment] = []
+        
+        // First, remove trailing references from content
+        let trimmedContent = removeTrailingReferences(content, references: references)
+        
+        // Regex patterns
+        let ethAddressPattern = #"0x[a-fA-F0-9]{40}"#
+        let eip155Pattern = #"eip155:(\d+)/erc20:(0x[a-fA-F0-9]{40})"#
+        
+        // Create regex objects
+        guard let ethRegex = try? NSRegularExpression(pattern: ethAddressPattern),
+              let eip155Regex = try? NSRegularExpression(pattern: eip155Pattern) else {
+            return [.text(trimmedContent)]
+        }
+        
+        let nsString = trimmedContent as NSString
+        let fullRange = NSRange(location: 0, length: nsString.length)
+        
+        // Find all matches
+        var allMatches: [(range: NSRange, type: String)] = []
+        
+        // Find Ethereum addresses (but exclude those that are part of EIP155 patterns)
+        ethRegex.enumerateMatches(in: trimmedContent, range: fullRange) { match, _, _ in
+            if let matchRange = match?.range {
+                // Check if this address is part of an EIP155 pattern
+                let extendedStart = max(0, matchRange.location - 20)
+                let extendedLength = min(nsString.length - extendedStart, matchRange.length + 40)
+                let extendedRange = NSRange(location: extendedStart, length: extendedLength)
+                let extendedText = nsString.substring(with: extendedRange)
+                
+                // If the address is part of an EIP155 pattern, skip it (EIP155 will handle it)
+                if !extendedText.contains("eip155:") {
+                    allMatches.append((range: matchRange, type: "eth"))
+                }
+            }
+        }
+        
+        // Find EIP155 tokens
+        eip155Regex.enumerateMatches(in: trimmedContent, range: fullRange) { match, _, _ in
+            if let matchRange = match?.range {
+                allMatches.append((range: matchRange, type: "eip155"))
+            }
+        }
+        
+        // Sort matches by location
+        allMatches.sort { $0.range.location < $1.range.location }
+        
+        var lastEndIndex = 0
+        
+        for match in allMatches {
+            // Check if there's text before the match
+            if match.range.location > lastEndIndex {
+                let textRange = NSRange(location: lastEndIndex, length: match.range.location - lastEndIndex)
+                let textContent = nsString.substring(with: textRange)
+                
+                // Check if the text immediately before the match ends with a non-space character
+                if !textContent.isEmpty {
+                    if textContent.hasSuffix(" ") || textContent.hasSuffix("\n") || textContent.hasSuffix("\t") {
+                        // There's a space separator, keep the text
+                        segments.append(.text(textContent))
+                    } else {
+                        // No space separator, find the last space/newline/tab and keep only text before it
+                        if let lastSpaceIndex = textContent.lastIndex(where: { $0.isWhitespace }) {
+                            let indexAfterSpace = textContent.index(after: lastSpaceIndex)
+                            let textBeforeSpace = String(textContent[..<indexAfterSpace])
+                            if !textBeforeSpace.isEmpty {
+                                segments.append(.text(textBeforeSpace))
+                            }
+                            // The text after the last space gets replaced by the match
+                        }
+                        // If no space found, the entire text gets replaced by the match
+                    }
+                }
+            }
+            
+            let matchedText = nsString.substring(with: match.range)
+            
+            if match.type == "eth" {
+                segments.append(.ethereumAddress(matchedText))
+            } else if match.type == "eip155" {
+                // Parse EIP155 pattern
+                if let eip155Match = try? eip155Regex.firstMatch(in: matchedText, range: NSRange(location: 0, length: matchedText.count)),
+                   eip155Match.numberOfRanges >= 3 {
+                    let chainId = (matchedText as NSString).substring(with: eip155Match.range(at: 1))
+                    let tokenAddress = (matchedText as NSString).substring(with: eip155Match.range(at: 2))
+                    
+                    // Find matching reference using the address field
+                    let matchingReference = references.first { reference in
+                        reference.type == "erc20" && 
+                        reference.address?.lowercased() == tokenAddress.lowercased()
+                    }
+                    
+                    segments.append(.eip155Token(chainId: chainId, tokenAddress: tokenAddress, reference: matchingReference))
+                }
+            }
+            
+            lastEndIndex = match.range.location + match.range.length
+        }
+        
+        // Add remaining text
+        if lastEndIndex < nsString.length {
+            let remainingText = nsString.substring(from: lastEndIndex)
+            if !remainingText.isEmpty {
+                segments.append(.text(remainingText))
+            }
+        }
+        
+        return segments.isEmpty ? [.text(trimmedContent)] : segments
+    }
+    
+    private static func removeTrailingReferences(_ content: String, references: [Reference]) -> String {
+        var currentContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Sort references by their end position in descending order to process from end to beginning
+        let sortedReferences = references
+            .compactMap { reference -> (reference: Reference, range: NSRange)? in
+                guard let position = reference.position else { return nil }
+                return (reference, NSRange(location: position.start, length: position.end - position.start))
+            }
+            .sorted { $0.range.location + $0.range.length > $1.range.location + $1.range.length }
+        
+        for (_, range) in sortedReferences {
+            let nsContent = currentContent as NSString
+            
+            // Check if this reference is at the end of the content (allowing for trailing whitespace)
+            let referenceEnd = range.location + range.length
+            let contentLength = nsContent.length
+            
+            // Ensure the range is valid for the current content
+            guard range.location < contentLength && referenceEnd <= contentLength else {
+                continue
+            }
+            
+            // Get the substring from reference end to content end
+            let trailingText = nsContent.substring(from: referenceEnd)
+            let trimmedTrailing = trailingText.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // If there's only whitespace after this reference, it's trailing - remove it
+            if trimmedTrailing.isEmpty {
+                currentContent = nsContent.substring(to: range.location).trimmingCharacters(in: .whitespacesAndNewlines)
+            } else {
+                // Stop processing once we find a reference that's not trailing
+                break
+            }
+        }
+        
+        return currentContent
+    }
+}
+
+// MARK: - Parsed Content View
+struct ParsedContentView: View {
+    let segments: [ContentSegment]
+    let isExpanded: Bool
+    let maxLines: Int
+    let maxHeight: CGFloat
+    
+    var body: some View {
+        let text = createAttributedText()
+        
+        // Use Text with attributed string for proper line limiting
+        if #available(iOS 15.0, *) {
+            Text(text)
+                .font(.body)
+                .lineLimit(isExpanded ? nil : maxLines)
+                .frame(maxHeight: isExpanded ? nil : maxHeight, alignment: .top)
+                .clipped()
+        } else {
+            // Fallback for older iOS versions
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(segments) { segment in
+                    createSegmentView(segment)
+                }
+            }
+            .lineLimit(isExpanded ? nil : maxLines)
+            .frame(maxHeight: isExpanded ? nil : maxHeight, alignment: .top)
+            .clipped()
+        }
+    }
+    
+    @available(iOS 15.0, *)
+    private func createAttributedText() -> AttributedString {
+        var result = AttributedString()
+        
+        for segment in segments {
+            switch segment {
+            case .text(let content):
+                result += AttributedString(content)
+                
+            case .ethereumAddress(let address):
+                let truncated = truncateAddress(address)
+                var addressAttr = AttributedString(truncated)
+                addressAttr.foregroundColor = .blue
+                addressAttr.underlineStyle = .single
+                result += addressAttr
+                
+            case .eip155Token(_, let tokenAddress, let reference):
+                let tokenText = getTokenText(tokenAddress: tokenAddress, reference: reference)
+                var tokenAttr = AttributedString(tokenText)
+                tokenAttr.foregroundColor = .blue
+                tokenAttr.underlineStyle = .single
+                result += tokenAttr
+            }
+        }
+        
+        return result
+    }
+    
+    @ViewBuilder
+    private func createSegmentView(_ segment: ContentSegment) -> some View {
+        switch segment {
+        case .text(let content):
+            Text(content)
+                .font(.body)
+                
+        case .ethereumAddress(let address):
+            Button(action: {
+                openBasescan(address: address)
+            }) {
+                Text(truncateAddress(address))
+                    .font(.body)
+                    .foregroundColor(.blue)
+                    .underline()
+            }
+            .buttonStyle(.plain)
+            
+        case .eip155Token(let chainId, let tokenAddress, let reference):
+            Button(action: {
+                openBlockscan(chainId: chainId, tokenAddress: tokenAddress)
+            }) {
+                Text(getTokenText(tokenAddress: tokenAddress, reference: reference))
+                    .font(.body)
+                    .foregroundColor(.blue)
+                    .underline()
+            }
+            .buttonStyle(.plain)
+        }
+    }
+    
+    private func getTokenText(tokenAddress: String, reference: Reference?) -> String {
+        if let symbol = reference?.symbol {
+            return "$\(symbol)"
+        } else if let name = reference?.name {
+            return "$\(name)"
+        } else {
+            // Show truncated address if no token info is found
+            return truncateAddress(tokenAddress)
+        }
+    }
+    
+    private func truncateAddress(_ address: String) -> String {
+        guard address.count > 10 else { return address }
+        let prefix = String(address.prefix(6))  // 0x1234
+        let suffix = String(address.suffix(4))  // abcd
+        return "\(prefix)...\(suffix)"
+    }
+    
+    private func openBasescan(address: String) {
+        let url = "https://basescan.org/address/\(address)"
+        if let urlObject = URL(string: url) {
+            UIApplication.shared.open(urlObject)
+        }
+    }
+    
+    private func openBlockscan(chainId: String, tokenAddress: String) {
+        // Map chain IDs to their respective block explorers
+        let explorerURL: String
+        switch chainId {
+        case "1":
+            explorerURL = "https://etherscan.io/token/\(tokenAddress)"
+        case "8453":
+            explorerURL = "https://basescan.org/token/\(tokenAddress)"
+        case "137":
+            explorerURL = "https://polygonscan.com/token/\(tokenAddress)"
+        case "10":
+            explorerURL = "https://optimistic.etherscan.io/token/\(tokenAddress)"
+        case "42161":
+            explorerURL = "https://arbiscan.io/token/\(tokenAddress)"
+        default:
+            explorerURL = "https://basescan.org/token/\(tokenAddress)" // Default to Basescan
+        }
+        
+        if let url = URL(string: explorerURL) {
+            UIApplication.shared.open(url)
+        }
+    }
+}
+
 // MARK: - Comment Row View
 struct CommentRowView: View {
     let comment: Comment
@@ -48,6 +357,11 @@ struct CommentRowView: View {
     // Constants for text truncation
     private let maxLines = 4
     private let maxHeight: CGFloat = 160 // Approximately 8 lines of text
+    
+    // Computed property for trimmed content
+    private var trimmedContent: String {
+        return comment.content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -87,8 +401,8 @@ struct CommentRowView: View {
                 }
                 
                 VStack(alignment: .leading) {
-                    if let displayName = comment.author.farcaster?.displayName {
-                        Text(displayName)
+                    if let username = comment.author.farcaster?.username {
+                        Text(username)
                             .font(.headline)
                             .fontWeight(.semibold)
                     } else if let ensName = comment.author.ens?.name {
@@ -111,14 +425,17 @@ struct CommentRowView: View {
             
             // Content with max height and show more button
             VStack(alignment: .leading, spacing: 8) {
-                Text(comment.content)
-                    .font(.body)
-                    .lineLimit(isExpanded ? nil : maxLines)
-                    .frame(maxHeight: isExpanded ? nil : maxHeight, alignment: .top)
-                    .clipped()
+                let parsedSegments = ContentParser.parseContent(trimmedContent, references: comment.references)
                 
-                // Show more/less button
-                if comment.content.count > 200 || comment.content.components(separatedBy: "\n").count > maxLines {
+                ParsedContentView(
+                    segments: parsedSegments,
+                    isExpanded: isExpanded,
+                    maxLines: maxLines,
+                    maxHeight: maxHeight
+                )
+                
+                // Show more/less button - use trimmed content for length check
+                if shouldShowMoreButton {
                     Button(action: {
                         isExpanded.toggle()
                     }) {
@@ -184,6 +501,11 @@ struct CommentRowView: View {
         .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
     }
     
+    // Computed property to determine if we should show the "Show more" button
+    private var shouldShowMoreButton: Bool {
+        return trimmedContent.count > 200 || trimmedContent.components(separatedBy: "\n").count > maxLines
+    }
+    
     private func truncateAddress(_ address: String) -> String {
         guard address.count > 10 else { return address }
         let prefix = String(address.prefix(6))  // 0x1234
@@ -201,7 +523,11 @@ struct ReferenceChip: View {
             Image(systemName: iconForReferenceType(reference.type))
                 .font(.caption)
             
-            if let title = reference.title {
+            if let symbol = reference.symbol, reference.type == "erc20" {
+                Text("$\(symbol)")
+                    .font(.caption)
+                    .lineLimit(1)
+            } else if let title = reference.title {
                 Text(title)
                     .font(.caption)
                     .lineLimit(1)
@@ -220,9 +546,45 @@ struct ReferenceChip: View {
         .foregroundColor(.blue)
         .cornerRadius(8)
         .onTapGesture {
-            if reference.type == "webpage", let urlString = reference.url, let url = URL(string: urlString) {
+            handleTap()
+        }
+    }
+    
+    private func handleTap() {
+        if reference.type == "webpage", let urlString = reference.url, let url = URL(string: urlString) {
+            UIApplication.shared.open(url)
+        } else if reference.type == "erc20", let address = reference.address {
+            let chainId = reference.chainId ?? 8453 // Default to Base
+            openBlockscan(chainId: String(chainId), tokenAddress: address)
+        } else if reference.type == "ens", let urlString = reference.url, let url = URL(string: urlString) {
+            UIApplication.shared.open(url)
+        } else if reference.type == "farcaster", let username = reference.username {
+            if let url = URL(string: "https://farcaster.xyz/\(username)") {
                 UIApplication.shared.open(url)
             }
+        }
+    }
+    
+    private func openBlockscan(chainId: String, tokenAddress: String) {
+        // Map chain IDs to their respective block explorers
+        let explorerURL: String
+        switch chainId {
+        case "1":
+            explorerURL = "https://etherscan.io/token/\(tokenAddress)"
+        case "8453":
+            explorerURL = "https://basescan.org/token/\(tokenAddress)"
+        case "137":
+            explorerURL = "https://polygonscan.com/token/\(tokenAddress)"
+        case "10":
+            explorerURL = "https://optimistic.etherscan.io/token/\(tokenAddress)"
+        case "42161":
+            explorerURL = "https://arbiscan.io/token/\(tokenAddress)"
+        default:
+            explorerURL = "https://basescan.org/token/\(tokenAddress)" // Default to Basescan
+        }
+        
+        if let url = URL(string: explorerURL) {
+            UIApplication.shared.open(url)
         }
     }
     
