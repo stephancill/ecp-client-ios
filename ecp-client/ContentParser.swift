@@ -14,6 +14,7 @@ enum ContentSegment: Identifiable {
     case eip155Token(chainId: String, tokenAddress: String, reference: Reference?)
     case url(String)
     case farcasterMention(String, reference: Reference?)
+    case ensMention(String, reference: Reference?)
     
     var id: String {
         switch self {
@@ -27,6 +28,8 @@ enum ContentSegment: Identifiable {
             return "url_\(url)"
         case .farcasterMention(let username, _):
             return "farcaster_\(username)"
+        case .ensMention(let ensName, _):
+            return "ens_\(ensName)"
         }
     }
 }
@@ -65,6 +68,18 @@ struct ContentParser {
                 // Ensure the range is valid for the trimmed content
                 if range.location < nsString.length && range.location + range.length <= nsString.length {
                     allMatches.append((range: range, type: "farcaster", reference: farcasterRef))
+                }
+            }
+        }
+        
+        // Add ENS mentions from references with positions
+        let ensReferences = references.filter { $0.type == "ens" && $0.position != nil }
+        for ensRef in ensReferences {
+            if let position = ensRef.position {
+                let range = NSRange(location: position.start, length: position.end - position.start)
+                // Ensure the range is valid for the trimmed content
+                if range.location < nsString.length && range.location + range.length <= nsString.length {
+                    allMatches.append((range: range, type: "ens", reference: ensRef))
                 }
             }
         }
@@ -153,6 +168,8 @@ struct ContentParser {
                 segments.append(.url(matchedText))
             } else if match.type == "farcaster" {
                 segments.append(.farcasterMention(matchedText, reference: match.reference))
+            } else if match.type == "ens" {
+                segments.append(.ensMention(matchedText, reference: match.reference))
             }
             
             lastEndIndex = match.range.location + match.range.length

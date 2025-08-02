@@ -61,6 +61,14 @@ struct ParsedContentView: View {
                 } else {
                     result += "@\(displayText)"
                 }
+                
+            case .ensMention(let mention, let reference):
+                let displayText = reference?.name ?? mention
+                if let urlString = reference?.url {
+                    result += "[@\(displayText)](ens://\(urlString))"
+                } else {
+                    result += "@\(displayText)"
+                }
             }
         }
         
@@ -79,6 +87,9 @@ struct ParsedContentView: View {
         } else if urlString.hasPrefix("farcaster://user/") {
             let username = String(urlString.dropFirst("farcaster://user/".count))
             openFarcasterProfile(username: username)
+        } else if urlString.hasPrefix("ens://") {
+            let ensUrl = String(urlString.dropFirst("ens://".count))
+            openURL(url: ensUrl)
         } else {
             // Handle regular URLs
             openURL(url: urlString)
