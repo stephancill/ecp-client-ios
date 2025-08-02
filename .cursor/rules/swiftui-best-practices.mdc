@@ -1,0 +1,75 @@
+---
+globs: *.swift
+description: Modern SwiftUI development best practices and patterns
+---
+
+# SwiftUI Best Practices Guide
+
+## 🏗️ **Architecture & State Management**
+
+- **Separate concerns**: Move complex views to dedicated files (e.g., `ComposeCommentView.swift`)
+- **Use proper property wrappers**:
+  - `@State` for local view state
+  - `@StateObject` for creating observable objects
+  - `@ObservedObject` for passed-in observable objects
+  - `@Environment` for system values (dismiss, colorScheme, etc.)
+
+## 📱 **Modern UI Patterns**
+
+- **Lists**: Use `.listStyle(.plain)` and `.listRowInsets(EdgeInsets())` for full-width content
+- **Loading states**: Implement skeleton views instead of basic progress indicators
+- **Modals**: Use `.sheet()` for modal presentation with proper dismiss handling
+- **Navigation**: Use `.navigationBarTitleDisplayMode(.large/.inline)` appropriately
+
+## ⚡ **Performance Optimization**
+
+- **Lazy loading**: Use `LazyVStack`/`LazyHStack` for large datasets
+- **Pagination**: Implement `.onAppear` triggers on last items for infinite scroll
+- **Async operations**: Use `@MainActor` and `URLSession.shared.dataTask` with proper error handling
+- **Image loading**: Use `AsyncImage` with placeholder handling
+
+## 🎨 **UI/UX Excellence**
+
+- **Consistent spacing**: Use system spacing (8, 12, 16, 20pt) and `.padding()` consistently
+- **Accessibility**: Add meaningful labels and ensure proper contrast
+- **Animations**: Use `.withAnimation()` for smooth state transitions
+- **Feedback**: Provide loading states, error messages, and success indicators
+
+## 🔄 **Data Flow Best Practices**
+
+```swift
+// ✅ Good - Observable service pattern
+class CommentsService: ObservableObject {
+    @Published var comments: [Comment] = []
+    @Published var isLoading = false
+
+    func fetchComments(refresh: Bool = false) { ... }
+}
+
+// ✅ Good - Proper state management
+struct ContentView: View {
+    @StateObject private var service = CommentsService()
+    @State private var showModal = false
+}
+```
+
+## 🚀 **Modern SwiftUI Features**
+
+- **Pull to refresh**: Use `.refreshable { ... }`
+- **Toolbar**: Use `.toolbar` with `ToolbarItem` for consistent navigation
+- **Overlay**: Use `.overlay()` for floating elements (FABs, badges)
+- **Sheet presentation**: Use `.sheet(isPresented:)` for modals
+
+## 🛡️ **Error Handling & Validation**
+
+- Always handle network errors gracefully with retry options
+- Validate user input in real-time (character limits, empty states)
+- Use `.disabled()` and visual feedback for invalid states
+- Provide clear error messages and recovery paths
+
+## 📝 **Code Organization**
+
+- Group related views in the same file using `// MARK: -` comments
+- Extract reusable components (skeleton views, chips, etc.)
+- Use computed properties for complex view logic
+- Keep view body methods focused and readable
