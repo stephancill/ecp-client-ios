@@ -123,6 +123,7 @@ class CommentsService: ObservableObject {
     enum ServiceType {
         case mainComments
         case replies(parentId: String)
+        case userComments(address: String)
     }
     
     init(serviceType: ServiceType = .mainComments) {
@@ -132,6 +133,8 @@ class CommentsService: ObservableObject {
             self.parentCommentId = nil
         case .replies(let parentId):
             self.parentCommentId = parentId
+        case .userComments:
+            self.parentCommentId = nil
         }
     }
     
@@ -140,10 +143,9 @@ class CommentsService: ObservableObject {
             isRefreshing = true
             endCursor = nil
             currentPagination = nil
-        } else {
-            isLoading = comments.isEmpty
         }
         
+        isLoading = !refresh && comments.isEmpty
         errorMessage = nil
         
         let urlString = buildURL()
@@ -164,31 +166,37 @@ class CommentsService: ObservableObject {
                 self?.isRefreshing = false
                 
                 if let error = error {
+                    print("CommentsService: Network error: \(error)")
                     self?.errorMessage = "Network error: \(error.localizedDescription)"
                     return
                 }
                 
                 guard let data = data else {
+                    print("CommentsService: No data received")
                     self?.errorMessage = "No data received"
                     return
                 }
                 
                 do {
                     let commentsResponse = try JSONDecoder().decode(CommentsResponse.self, from: data)
+                    print("CommentsService: Successfully decoded \(commentsResponse.results.count) comments")
                     
                     if self?.isRefreshing == true || self?.comments.isEmpty == true {
                         self?.comments = commentsResponse.results
+                        print("CommentsService: Set comments array to \(commentsResponse.results.count) items")
                     } else {
                         // Append new comments, avoiding duplicates
                         let newComments = commentsResponse.results.filter { newComment in
                             !(self?.comments.contains { $0.id == newComment.id } ?? false)
                         }
                         self?.comments.append(contentsOf: newComments)
+                        print("CommentsService: Appended \(newComments.count) new comments, total now: \(self?.comments.count ?? 0)")
                     }
                     
                     self?.currentPagination = commentsResponse.pagination
                     self?.endCursor = commentsResponse.pagination.hasNext ? commentsResponse.pagination.endCursor : nil
                 } catch {
+                    print("CommentsService: Decode error: \(error)")
                     self?.errorMessage = "Failed to decode data: \(error.localizedDescription)"
                 }
             }
@@ -196,15 +204,22 @@ class CommentsService: ObservableObject {
     }
     
     private func buildURL() -> String {
+        let url: String
         switch serviceType {
         case .mainComments:
             let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&excludeByModerationLabels=spam%2Csexual&limit=20&sort=desc&mode=nested"
-            return endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
+            url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
             
         case .replies(let parentId):
             let baseURL = "https://api.ethcomments.xyz/api/comments/\(parentId)/replies?chainId=8453&limit=20"
-            return endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
+            url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
+            
+        case .userComments(let address):
+            let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&excludeByModerationLabels=spam%2Csexual&limit=20&sort=desc&mode=nested&author=\(address)"
+            url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
         }
+        print("CommentsService: Fetching URL: \(url)")
+        return url
     }
     
     func loadMoreCommentsIfNeeded() {
@@ -228,18 +243,7 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack {
-                if commentsService.isLoading && commentsService.comments.isEmpty && !commentsService.isRefreshing {
-                    // Show skeleton views only during initial load when no data exists (not during refresh)
-                    List {
-                        ForEach(0..<8, id: \.self) { _ in
-                            CommentSkeletonView()
-                                .listRowInsets(EdgeInsets())
-                                .listRowSeparator(.hidden)
-                        }
-                    }
-                    .listStyle(.plain)
-                    .disabled(true)
-                } else if let errorMessage = commentsService.errorMessage {
+                if let errorMessage = commentsService.errorMessage {
                     VStack {
                         Image(systemName: "exclamationmark.triangle")
                             .foregroundColor(.orange)
@@ -255,17 +259,16 @@ struct ContentView: View {
                         .buttonStyle(.borderedProminent)
                     }
                 } else if commentsService.comments.isEmpty {
-                    VStack {
-                        Image(systemName: "message")
-                            .foregroundColor(.gray)
-                            .font(.largeTitle)
-                        Text("No comments yet")
-                            .font(.headline)
-                        Button("Load Comments") {
-                            commentsService.fetchComments(refresh: true)
+                    // Show skeleton views when no data exists
+                    List {
+                        ForEach(0..<8, id: \.self) { _ in
+                            CommentSkeletonView()
+                                .listRowInsets(EdgeInsets())
+                                .listRowSeparator(.hidden)
                         }
-                        .buttonStyle(.borderedProminent)
                     }
+                    .listStyle(.plain)
+                    .disabled(true)
                 } else {
                     List {
                         ForEach(commentsService.comments) { comment in
@@ -314,16 +317,6 @@ struct ContentView: View {
             }
             .navigationTitle("Comments")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        commentsService.fetchComments(refresh: true)
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 16, weight: .medium))
-                    }
-                }
-            }
             .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
         }
         .overlay(
