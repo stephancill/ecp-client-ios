@@ -14,6 +14,7 @@
 		D4C7B2B92E3E2C62002B087F /* ComposeCommentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2B82E3E2C62002B087F /* ComposeCommentView.swift */; };
 		D4C7B2BB2E3E33E8002B087F /* CommentViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2BA2E3E33E8002B087F /* CommentViews.swift */; };
 		D4C7B2BE2E3E3BA6002B087F /* Blockies.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2BD2E3E3BA6002B087F /* Blockies.swift */; };
+		D4C7B2C02E3E67D9002B087F /* UserDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2BF2E3E67D9002B087F /* UserDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,6 +26,7 @@
 		D4C7B2B82E3E2C62002B087F /* ComposeCommentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeCommentView.swift; sourceTree = "<group>"; };
 		D4C7B2BA2E3E33E8002B087F /* CommentViews.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentViews.swift; sourceTree = "<group>"; };
 		D4C7B2BD2E3E3BA6002B087F /* Blockies.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Blockies.swift; sourceTree = "<group>"; };
+		D4C7B2BF2E3E67D9002B087F /* UserDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,6 +64,7 @@
 				D4C7B2BA2E3E33E8002B087F /* CommentViews.swift */,
 				D4C7B2BD2E3E3BA6002B087F /* Blockies.swift */,
 				D4C7B2B82E3E2C62002B087F /* ComposeCommentView.swift */,
+				D4C7B2BF2E3E67D9002B087F /* UserDetailView.swift */,
 				D4C7B2AB2E3E205C002B087F /* Assets.xcassets */,
 				D4C7B2AD2E3E205C002B087F /* Preview Content */,
 			);
@@ -154,6 +157,7 @@
 				D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */,
 				D4C7B2BE2E3E3BA6002B087F /* Blockies.swift in Sources */,
 				D4C7B2BB2E3E33E8002B087F /* CommentViews.swift in Sources */,
+				D4C7B2C02E3E67D9002B087F /* UserDetailView.swift in Sources */,
 				D4C7B2B92E3E2C62002B087F /* ComposeCommentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

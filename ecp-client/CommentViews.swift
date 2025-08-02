@@ -45,6 +45,7 @@ enum ContentSegment: Identifiable {
     case ethereumAddress(String)
     case eip155Token(chainId: String, tokenAddress: String, reference: Reference?)
     case url(String)
+    case farcasterMention(String, reference: Reference?)
     
     var id: String {
         switch self {
@@ -56,6 +57,8 @@ enum ContentSegment: Identifiable {
             return "token_\(chainId)_\(tokenAddress)"
         case .url(let url):
             return "url_\(url)"
+        case .farcasterMention(let username, _):
+            return "farcaster_\(username)"
         }
     }
 }
@@ -84,7 +87,19 @@ struct ContentParser {
         let fullRange = NSRange(location: 0, length: nsString.length)
         
         // Find all matches
-        var allMatches: [(range: NSRange, type: String)] = []
+        var allMatches: [(range: NSRange, type: String, reference: Reference?)] = []
+        
+        // First, add farcaster mentions from references with positions
+        let farcasterReferences = references.filter { $0.type == "farcaster" && $0.position != nil }
+        for farcasterRef in farcasterReferences {
+            if let position = farcasterRef.position {
+                let range = NSRange(location: position.start, length: position.end - position.start)
+                // Ensure the range is valid for the trimmed content
+                if range.location < nsString.length && range.location + range.length <= nsString.length {
+                    allMatches.append((range: range, type: "farcaster", reference: farcasterRef))
+                }
+            }
+        }
         
         // Find Ethereum addresses (but exclude those that are part of EIP155 patterns)
         ethRegex.enumerateMatches(in: trimmedContent, range: fullRange) { match, _, _ in
@@ -97,7 +112,7 @@ struct ContentParser {
                 
                 // If the address is part of an EIP155 pattern, skip it (EIP155 will handle it)
                 if !extendedText.contains("eip155:") {
-                    allMatches.append((range: matchRange, type: "eth"))
+                    allMatches.append((range: matchRange, type: "eth", reference: nil))
                 }
             }
         }
@@ -105,14 +120,14 @@ struct ContentParser {
         // Find EIP155 tokens
         eip155Regex.enumerateMatches(in: trimmedContent, range: fullRange) { match, _, _ in
             if let matchRange = match?.range {
-                allMatches.append((range: matchRange, type: "eip155"))
+                allMatches.append((range: matchRange, type: "eip155", reference: nil))
             }
         }
         
         // Find URLs
         urlRegex.enumerateMatches(in: trimmedContent, range: fullRange) { match, _, _ in
             if let matchRange = match?.range {
-                allMatches.append((range: matchRange, type: "url"))
+                allMatches.append((range: matchRange, type: "url", reference: nil))
             }
         }
         
@@ -168,6 +183,8 @@ struct ContentParser {
                 }
             } else if match.type == "url" {
                 segments.append(.url(matchedText))
+            } else if match.type == "farcaster" {
+                segments.append(.farcasterMention(matchedText, reference: match.reference))
             }
             
             lastEndIndex = match.range.location + match.range.length
@@ -230,6 +247,15 @@ struct ParsedContentView: View {
     let isExpanded: Bool
     let maxLines: Int
     let maxHeight: CGFloat
+    let onUserTap: ((String, String, String) -> Void)?
+    
+    init(segments: [ContentSegment], isExpanded: Bool, maxLines: Int, maxHeight: CGFloat, onUserTap: ((String, String, String) -> Void)? = nil) {
+        self.segments = segments
+        self.isExpanded = isExpanded
+        self.maxLines = maxLines
+        self.maxHeight = maxHeight
+        self.onUserTap = onUserTap
+    }
     
     var body: some View {
         let text = createAttributedText()
@@ -282,6 +308,16 @@ struct ParsedContentView: View {
                 urlAttr.foregroundColor = .blue
                 urlAttr.underlineStyle = .single
                 result += urlAttr
+                
+            case .farcasterMention(let mention, let reference):
+                let displayText = reference?.username ?? mention
+                var mentionAttr = AttributedString("@\(displayText)")
+                // Only make it blue and underlined if we have a username to link to
+                if reference?.username != nil {
+                    mentionAttr.foregroundColor = .blue
+                    mentionAttr.underlineStyle = .single
+                }
+                result += mentionAttr
             }
         }
         
@@ -297,7 +333,7 @@ struct ParsedContentView: View {
                 
         case .ethereumAddress(let address):
             Button(action: {
-                openBasescan(address: address)
+                onUserTap?(address, truncateAddress(address), address)
             }) {
                 Text(truncateAddress(address))
                     .font(.body)
@@ -327,6 +363,28 @@ struct ParsedContentView: View {
                     .underline()
             }
             .buttonStyle(.plain)
+            
+        case .farcasterMention(let mention, let reference):
+            let displayText = reference?.username ?? mention
+            
+            // Only make it clickable if we have a username
+            if reference?.username != nil {
+                Button(action: {
+                    if let username = reference?.username {
+                        onUserTap?(username, "@\(username)", username)
+                    }
+                }) {
+                    Text("@\(displayText)")
+                        .font(.body)
+                        .foregroundColor(.blue)
+                        .underline()
+                }
+                .buttonStyle(.plain)
+            } else {
+                // Non-clickable text for FID-only mentions
+                Text("@\(displayText)")
+                    .font(.body)
+            }
         }
     }
     
@@ -368,6 +426,15 @@ struct ParsedContentView: View {
             UIApplication.shared.open(urlObject)
         }
     }
+    
+    private func openFarcasterProfile(reference: Reference?) {
+        guard let reference = reference,
+              let username = reference.username else { return }
+        
+        if let url = URL(string: "https://farcaster.id/\(username)") {
+            UIApplication.shared.open(url)
+        }
+    }
 }
 
 // MARK: - Comment Row View
@@ -376,6 +443,7 @@ struct CommentRowView: View {
     let showRepliesButton: Bool
     @State private var isExpanded = false
     @State private var showingRepliesSheet = false
+    @State private var showingUserDetailSheet = false
     @Environment(\.colorScheme) private var colorScheme
     
     init(comment: Comment, showRepliesButton: Bool = true) {
@@ -387,17 +455,33 @@ struct CommentRowView: View {
     private let maxLines = 4
     private let maxHeight: CGFloat = 160 // Approximately 8 lines of text
     
+    // Computed property for consistent username display
+    private var displayUsername: String {
+        if let username = comment.author.farcaster?.username, !username.hasPrefix("!") {
+            return username
+        } else if let ensName = comment.author.ens?.name {
+            return ensName
+        } else {
+            return truncateAddress(comment.author.address)
+        }
+    }
+    
     // Computed property for trimmed content
     private var trimmedContent: String {
         return comment.content.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    // Computed property for deduplicated references
+    // Computed property for deduplicated references (excluding farcaster mentions which are shown inline)
     private var deduplicatedReferences: [Reference] {
         var uniqueReferences: [Reference] = []
         var seenIdentifiers: Set<String> = []
         
         for reference in comment.references {
+            // Skip farcaster references as they're now shown inline
+            if reference.type == "farcaster" {
+                continue
+            }
+            
             let identifier = getReferenceIdentifier(reference)
             if !seenIdentifiers.contains(identifier) {
                 seenIdentifiers.insert(identifier)
@@ -411,58 +495,53 @@ struct CommentRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Author section
-            HStack {
-                Group {
-                    if let imageUrl = comment.author.farcaster?.pfpUrl ?? comment.author.ens?.avatarUrl,
-                       !imageUrl.isEmpty {
-                        AsyncImage(url: URL(string: imageUrl)) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 40, height: 40)
-                                    .clipShape(Circle())
-                            case .failure(_):
-                                // Image failed to load, show blockies
-                                BlockiesAvatarView(address: comment.author.address, size: 40)
-                            case .empty:
-                                // Loading state - show a simple placeholder
-                                Circle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(width: 40, height: 40)
-                            @unknown default:
-                                BlockiesAvatarView(address: comment.author.address, size: 40)
+            Button(action: {
+                showingUserDetailSheet = true
+            }) {
+                HStack {
+                    Group {
+                        if let imageUrl = comment.author.farcaster?.pfpUrl ?? comment.author.ens?.avatarUrl,
+                           !imageUrl.isEmpty {
+                            AsyncImage(url: URL(string: imageUrl)) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 40, height: 40)
+                                        .clipShape(Circle())
+                                case .failure(_):
+                                    // Image failed to load, show blockies
+                                    BlockiesAvatarView(address: comment.author.address, size: 40)
+                                case .empty:
+                                    // Loading state - show a simple placeholder
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: 40, height: 40)
+                                @unknown default:
+                                    BlockiesAvatarView(address: comment.author.address, size: 40)
+                                }
                             }
+                        } else {
+                            // No image URL available, show blockies immediately
+                            BlockiesAvatarView(address: comment.author.address, size: 40)
                         }
-                    } else {
-                        // No image URL available, show blockies immediately
-                        BlockiesAvatarView(address: comment.author.address, size: 40)
-                    }
-                }
-                
-                VStack(alignment: .leading) {
-                    if let username = comment.author.farcaster?.username, !username.hasPrefix("!") {
-                        Text(username)
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                    } else if let ensName = comment.author.ens?.name {
-                        Text(ensName)
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                    } else {
-                        Text(truncateAddress(comment.author.address))
-                            .font(.headline)
-                            .fontWeight(.semibold)
                     }
                     
-                    Text(comment.formattedDate)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    VStack(alignment: .leading) {
+                        Text(displayUsername)
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                        
+                        Text(comment.formattedDate)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
                 }
-                
-                Spacer()
             }
+            .buttonStyle(.plain)
             
             // Content with max height and show more button
             VStack(alignment: .leading, spacing: 8) {
@@ -472,7 +551,10 @@ struct CommentRowView: View {
                     segments: parsedSegments,
                     isExpanded: isExpanded,
                     maxLines: maxLines,
-                    maxHeight: maxHeight
+                    maxHeight: maxHeight,
+                    onUserTap: { username, displayName, address in
+                        showingUserDetailSheet = true
+                    }
                 )
                 
                 // Show more/less button - use trimmed content for length check
@@ -549,6 +631,15 @@ struct CommentRowView: View {
             RepliesView(parentComment: comment)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showingUserDetailSheet) {
+            UserDetailView(
+                avatar: comment.author.farcaster?.pfpUrl ?? comment.author.ens?.avatarUrl,
+                username: displayUsername,
+                address: comment.author.address
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
     }
     
@@ -831,7 +922,7 @@ struct RepliesView: View {
     var body: some View {
         NavigationView {
             VStack {
-                if repliesService.isLoading && repliesService.comments.isEmpty {
+                if (repliesService.isLoading || repliesService.isRefreshing) && repliesService.comments.isEmpty {
                     // Show skeleton views during initial load
                     List {
                         ForEach(0..<8, id: \.self) { _ in
