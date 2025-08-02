@@ -168,7 +168,7 @@ public final class Blockies {
         // let divisor = (UInt32((1 << 31)) >> UInt32(0))
         let divisor = Int32.max
 
-        return Double((UInt32(randSeed[3]) >> UInt32(0))) / Double(divisor)
+        return Double(randSeed[3]) / Double(divisor)
     }
 
     private func createColor() -> BlockiesNativeColor {
