@@ -143,7 +143,7 @@ struct UserDetailView: View {
                                 .fontWeight(.semibold)
                             Spacer()
                         }
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, 12)
                         if commentsService.comments.isEmpty {
                             VStack(spacing: 0) {
                                 ForEach(0..<5, id: \.self) { _ in
