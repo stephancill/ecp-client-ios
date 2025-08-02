@@ -12,9 +12,16 @@
 		D4C7B2AC2E3E205C002B087F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4C7B2AB2E3E205C002B087F /* Assets.xcassets */; };
 		D4C7B2AF2E3E205C002B087F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4C7B2AE2E3E205C002B087F /* Preview Assets.xcassets */; };
 		D4C7B2B92E3E2C62002B087F /* ComposeCommentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2B82E3E2C62002B087F /* ComposeCommentView.swift */; };
-		D4C7B2BB2E3E33E8002B087F /* CommentViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2BA2E3E33E8002B087F /* CommentViews.swift */; };
 		D4C7B2BE2E3E3BA6002B087F /* Blockies.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2BD2E3E3BA6002B087F /* Blockies.swift */; };
 		D4C7B2C02E3E67D9002B087F /* UserDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2BF2E3E67D9002B087F /* UserDetailView.swift */; };
+		D4C7B2C22E3E9DB5002B087F /* BlockiesAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C12E3E9DB5002B087F /* BlockiesAvatarView.swift */; };
+		D4C7B2C42E3E9DBB002B087F /* ContentParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C32E3E9DBB002B087F /* ContentParser.swift */; };
+		D4C7B2CB2E3E9DD8002B087F /* CommentSkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C52E3E9DD8002B087F /* CommentSkeletonView.swift */; };
+		D4C7B2CC2E3E9DD8002B087F /* ReferenceChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */; };
+		D4C7B2CD2E3E9DD8002B087F /* RepliesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C72E3E9DD8002B087F /* RepliesView.swift */; };
+
+		D4C7B2CF2E3E9DD8002B087F /* CommentRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C92E3E9DD8002B087F /* CommentRowView.swift */; };
+		D4C7B2D02E3E9DD8002B087F /* ParsedContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,9 +31,16 @@
 		D4C7B2AB2E3E205C002B087F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D4C7B2AE2E3E205C002B087F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		D4C7B2B82E3E2C62002B087F /* ComposeCommentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeCommentView.swift; sourceTree = "<group>"; };
-		D4C7B2BA2E3E33E8002B087F /* CommentViews.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentViews.swift; sourceTree = "<group>"; };
 		D4C7B2BD2E3E3BA6002B087F /* Blockies.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Blockies.swift; sourceTree = "<group>"; };
 		D4C7B2BF2E3E67D9002B087F /* UserDetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserDetailView.swift; sourceTree = "<group>"; };
+		D4C7B2C12E3E9DB5002B087F /* BlockiesAvatarView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BlockiesAvatarView.swift; sourceTree = "<group>"; };
+		D4C7B2C32E3E9DBB002B087F /* ContentParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentParser.swift; sourceTree = "<group>"; };
+		D4C7B2C52E3E9DD8002B087F /* CommentSkeletonView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentSkeletonView.swift; sourceTree = "<group>"; };
+		D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferenceChip.swift; sourceTree = "<group>"; };
+		D4C7B2C72E3E9DD8002B087F /* RepliesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RepliesView.swift; sourceTree = "<group>"; };
+
+		D4C7B2C92E3E9DD8002B087F /* CommentRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentRowView.swift; sourceTree = "<group>"; };
+		D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ParsedContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,9 +75,16 @@
 			children = (
 				D4C7B2A72E3E205A002B087F /* ecp_clientApp.swift */,
 				D4C7B2A92E3E205A002B087F /* ContentView.swift */,
-				D4C7B2BA2E3E33E8002B087F /* CommentViews.swift */,
 				D4C7B2BD2E3E3BA6002B087F /* Blockies.swift */,
 				D4C7B2B82E3E2C62002B087F /* ComposeCommentView.swift */,
+				D4C7B2C92E3E9DD8002B087F /* CommentRowView.swift */,
+				D4C7B2C52E3E9DD8002B087F /* CommentSkeletonView.swift */,
+
+				D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */,
+				D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */,
+				D4C7B2C72E3E9DD8002B087F /* RepliesView.swift */,
+				D4C7B2C12E3E9DB5002B087F /* BlockiesAvatarView.swift */,
+				D4C7B2C32E3E9DBB002B087F /* ContentParser.swift */,
 				D4C7B2BF2E3E67D9002B087F /* UserDetailView.swift */,
 				D4C7B2AB2E3E205C002B087F /* Assets.xcassets */,
 				D4C7B2AD2E3E205C002B087F /* Preview Content */,
@@ -153,11 +174,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4C7B2CF2E3E9DD8002B087F /* CommentRowView.swift in Sources */,
 				D4C7B2AA2E3E205A002B087F /* ContentView.swift in Sources */,
 				D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */,
+				D4C7B2CB2E3E9DD8002B087F /* CommentSkeletonView.swift in Sources */,
+				D4C7B2CD2E3E9DD8002B087F /* RepliesView.swift in Sources */,
+				D4C7B2CC2E3E9DD8002B087F /* ReferenceChip.swift in Sources */,
 				D4C7B2BE2E3E3BA6002B087F /* Blockies.swift in Sources */,
-				D4C7B2BB2E3E33E8002B087F /* CommentViews.swift in Sources */,
+				D4C7B2C22E3E9DB5002B087F /* BlockiesAvatarView.swift in Sources */,
+				D4C7B2D02E3E9DD8002B087F /* ParsedContentView.swift in Sources */,
 				D4C7B2C02E3E67D9002B087F /* UserDetailView.swift in Sources */,
+				D4C7B2C42E3E9DBB002B087F /* ContentParser.swift in Sources */,
+
 				D4C7B2B92E3E2C62002B087F /* ComposeCommentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
