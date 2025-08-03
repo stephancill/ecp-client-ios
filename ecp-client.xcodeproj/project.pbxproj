@@ -11,6 +11,8 @@
 		D4BEED932E3EB7E600A45974 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED922E3EB7E600A45974 /* Utils.swift */; };
 		D4BEED972E3F907100A45974 /* CommentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED962E3F907100A45974 /* CommentManager.swift */; };
 		D4BEED992E3FB10400A45974 /* CommentPollingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED982E3FB10400A45974 /* CommentPollingService.swift */; };
+		D4BEED9C2E3FCDAF00A45974 /* CoinbaseWalletSDK in Frameworks */ = {isa = PBXBuildFile; productRef = D4BEED9B2E3FCDAF00A45974 /* CoinbaseWalletSDK */; };
+		D4BEED9F2E3FD11100A45974 /* WalletConfigurationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED9E2E3FD11100A45974 /* WalletConfigurationService.swift */; };
 		D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2A72E3E205A002B087F /* ecp_clientApp.swift */; };
 		D4C7B2AA2E3E205A002B087F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2A92E3E205A002B087F /* ContentView.swift */; };
 		D4C7B2AC2E3E205C002B087F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4C7B2AB2E3E205C002B087F /* Assets.xcassets */; };
@@ -36,6 +38,8 @@
 		D4BEED922E3EB7E600A45974 /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		D4BEED962E3F907100A45974 /* CommentManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentManager.swift; sourceTree = "<group>"; };
 		D4BEED982E3FB10400A45974 /* CommentPollingService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentPollingService.swift; sourceTree = "<group>"; };
+		D4BEED9D2E3FCED400A45974 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		D4BEED9E2E3FD11100A45974 /* WalletConfigurationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WalletConfigurationService.swift; sourceTree = "<group>"; };
 		D4C7B2A42E3E205A002B087F /* ecp-client.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ecp-client.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D4C7B2A72E3E205A002B087F /* ecp_clientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ecp_clientApp.swift; sourceTree = "<group>"; };
 		D4C7B2A92E3E205A002B087F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -59,6 +63,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4BEED9C2E3FCDAF00A45974 /* CoinbaseWalletSDK in Frameworks */,
 				D4C7B2D52E3EACF7002B087F /* Web3ContractABI in Frameworks */,
 				D4C7B2D72E3EACF7002B087F /* Web3PromiseKit in Frameworks */,
 				D4C7B2D32E3EACF7002B087F /* Web3 in Frameworks */,
@@ -87,6 +92,7 @@
 		D4C7B2A62E3E205A002B087F /* ecp-client */ = {
 			isa = PBXGroup;
 			children = (
+				D4BEED9D2E3FCED400A45974 /* Info.plist */,
 				D4C7B2A72E3E205A002B087F /* ecp_clientApp.swift */,
 				D4C7B2A92E3E205A002B087F /* ContentView.swift */,
 				D4C7B2BD2E3E3BA6002B087F /* Blockies.swift */,
@@ -96,6 +102,7 @@
 				D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */,
 				D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */,
 				D4BEED962E3F907100A45974 /* CommentManager.swift */,
+				D4BEED9E2E3FD11100A45974 /* WalletConfigurationService.swift */,
 				D4BEED982E3FB10400A45974 /* CommentPollingService.swift */,
 				D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */,
 				D4BEED902E3EB3EB00A45974 /* SettingsView.swift */,
@@ -138,6 +145,7 @@
 				D4C7B2D22E3EACF7002B087F /* Web3 */,
 				D4C7B2D42E3EACF7002B087F /* Web3ContractABI */,
 				D4C7B2D62E3EACF7002B087F /* Web3PromiseKit */,
+				D4BEED9B2E3FCDAF00A45974 /* CoinbaseWalletSDK */,
 			);
 			productName = "ecp-client";
 			productReference = D4C7B2A42E3E205A002B087F /* ecp-client.app */;
@@ -169,6 +177,7 @@
 			mainGroup = D4C7B29B2E3E205A002B087F;
 			packageReferences = (
 				D4C7B2D12E3EACF7002B087F /* XCRemoteSwiftPackageReference "Web3.swift" */,
+				D4BEED9A2E3FCDAF00A45974 /* XCRemoteSwiftPackageReference "wallet-mobile-sdk" */,
 			);
 			productRefGroup = D4C7B2A52E3E205A002B087F /* Products */;
 			projectDirPath = "";
@@ -202,6 +211,7 @@
 				D4BEED992E3FB10400A45974 /* CommentPollingService.swift in Sources */,
 				D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */,
 				D4C7B2CB2E3E9DD8002B087F /* CommentSkeletonView.swift in Sources */,
+				D4BEED9F2E3FD11100A45974 /* WalletConfigurationService.swift in Sources */,
 				D4BEED932E3EB7E600A45974 /* Utils.swift in Sources */,
 				D4C7B2CD2E3E9DD8002B087F /* RepliesView.swift in Sources */,
 				D4C7B2CC2E3E9DD8002B087F /* ReferenceChip.swift in Sources */,
@@ -349,6 +359,7 @@
 				DEVELOPMENT_TEAM = 6JKMV57Y77;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ecp-client/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -378,6 +389,7 @@
 				DEVELOPMENT_TEAM = 6JKMV57Y77;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ecp-client/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -420,6 +432,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		D4BEED9A2E3FCDAF00A45974 /* XCRemoteSwiftPackageReference "wallet-mobile-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/coinbase/wallet-mobile-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.2;
+			};
+		};
 		D4C7B2D12E3EACF7002B087F /* XCRemoteSwiftPackageReference "Web3.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Boilertalk/Web3.swift.git";
@@ -431,6 +451,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		D4BEED9B2E3FCDAF00A45974 /* CoinbaseWalletSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D4BEED9A2E3FCDAF00A45974 /* XCRemoteSwiftPackageReference "wallet-mobile-sdk" */;
+			productName = CoinbaseWalletSDK;
+		};
 		D4C7B2D22E3EACF7002B087F /* Web3 */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = D4C7B2D12E3EACF7002B087F /* XCRemoteSwiftPackageReference "Web3.swift" */;

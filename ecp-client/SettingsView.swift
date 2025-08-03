@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Web3
+import CoinbaseWalletSDK
 
 
 struct SettingsView: View {
@@ -18,6 +19,9 @@ struct SettingsView: View {
     @State private var identityAddress: String? = nil
     @State private var showConnectWallet = false
     @State private var showEnterAddress = false
+    @State private var isApprovingIdentity = false
+    @State private var approvalError: String?
+    @State private var showApprovalError = false
     @StateObject private var balanceService = BalanceService()
     @StateObject private var commentsService = CommentsContractService()
     
@@ -116,6 +120,41 @@ struct SettingsView: View {
                         Text("Identity Management")
                     } footer: {
                         Text("Disconnect your identity address to remove it from this device.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                // Show approval section if identity exists but is not approved
+                if let identityAddr = identityAddress, commentsService.isApproved != true {
+                    Section {
+                        Button(action: {
+                            approveIdentity(identityAddress: identityAddr)
+                        }) {
+                            HStack {
+                                if isApprovingIdentity {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                        .foregroundColor(.green)
+                                } else {
+                                    Image(systemName: "checkmark.shield")
+                                        .foregroundColor(.green)
+                                }
+                                Text(isApprovingIdentity ? "Approving..." : "Approve Identity")
+                                    .foregroundColor(.green)
+                                Spacer()
+                                if !isApprovingIdentity {
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        .disabled(commentsService.isLoading || isApprovingIdentity)
+                    } header: {
+                        Text("Identity Approval")
+                    } footer: {
+                        Text("Approve your identity address to enable posting comments. This will send a transaction to the Ethereum Comments Protocol contract.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -294,6 +333,13 @@ struct SettingsView: View {
         .sheet(isPresented: $showEnterAddress) {
             EnterAddressView(identityAddress: $identityAddress)
         }
+        .alert("Approval Failed", isPresented: $showApprovalError) {
+            Button("OK") {
+                showApprovalError = false
+            }
+        } message: {
+            Text(approvalError ?? "Failed to approve identity. Please try again.")
+        }
         .onAppear {
             loadPrivateKey()
             loadIdentityAddress()
@@ -373,12 +419,80 @@ struct SettingsView: View {
             print("Failed to load identity address: \(error)")
         }
     }
+    
+    private func approveIdentity(identityAddress: String) {
+        isApprovingIdentity = true
+        let cbwallet = CoinbaseWalletSDK.shared
+        
+        do {
+            // Create approval transaction data
+            let expiry = Date().timeIntervalSince1970 + (100 * 365 * 24 * 60 * 60) // 100 years from now
+            let transactionData = try commentsService.getApprovalTransactionData(
+                appAddress: ethereumAddress,
+                expiry: expiry
+            )
+            
+            cbwallet.makeRequest(
+                Request(
+                    actions: [
+                        Action(jsonRpc: .wallet_switchEthereumChain(chainId: "8453")),
+                        Action(jsonRpc: .eth_sendTransaction(
+                            fromAddress: identityAddress,
+                            toAddress: "0xb262C9278fBcac384Ef59Fc49E24d800152E19b1",
+                            weiValue: "0",
+                            data: transactionData.hasPrefix("0x") ? transactionData : "0x" + transactionData,
+                            nonce: nil,
+                            gasPriceInWei: nil,
+                            maxFeePerGas: nil,
+                            maxPriorityFeePerGas: nil,
+                            gasLimit: nil,
+                            chainId: "8453",
+                            actionSource: .none
+                        ))
+                    ], 
+                    account: .init(chain: "base", networkId: 8453, address: identityAddress)
+                )
+            ) { result in
+                DispatchQueue.main.async {
+                    self.isApprovingIdentity = false
+                    
+                    switch result {
+                    case .success(let response):
+                        print("🎉 Identity approval transaction sent successfully")
+                        print("Transaction hash: \(response)")
+                        
+                        // Check approval status after a delay to allow transaction to be mined
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                            Task {
+                                await self.commentsService.checkApproval(identityAddress: identityAddress, appAddress: self.ethereumAddress)
+                            }
+                        }
+                        
+                    case .failure(let error):
+                        print("❌ Failed to send approval transaction: \(error)")
+                        self.approvalError = error.localizedDescription
+                        self.showApprovalError = true
+                    }
+                }
+            }
+            
+        } catch {
+            print("❌ Failed to create approval transaction data: \(error)")
+            isApprovingIdentity = false
+            approvalError = error.localizedDescription
+            showApprovalError = true
+        }
+    }
 }
 
 struct ConnectWalletView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var identityAddress: String?
     @State private var isConnecting = false
+    @State private var selectedWallet: SupportedWallet = .coinbase
+    @State private var connectionError: String?
+    @State private var showErrorAlert = false
+    @StateObject private var walletConfig = WalletConfigurationService.shared
     
     var body: some View {
         NavigationView {
@@ -392,11 +506,31 @@ struct ConnectWalletView: View {
                         .font(.title2)
                         .fontWeight(.semibold)
                     
-                    Text("Connect your wallet to verify your identity. This will allow you to sign messages and verify your Ethereum address.")
+                    Text("Select your wallet and connect to verify your identity. This will allow you to sign messages and verify your Ethereum address.")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
+                }
+                
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Choose Your Wallet")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    VStack(spacing: 12) {
+                        ForEach(SupportedWallet.allCases, id: \.self) { wallet in
+                            WalletOptionView(
+                                wallet: wallet,
+                                isSelected: selectedWallet == wallet,
+                                action: {
+                                    selectedWallet = wallet
+                                    walletConfig.setSelectedWallet(wallet)
+                                }
+                            )
+                        }
+                    }
+                    .padding(.horizontal)
                 }
                 
                 Spacer()
@@ -411,18 +545,18 @@ struct ConnectWalletView: View {
                                     .scaleEffect(0.8)
                                     .foregroundColor(.white)
                             } else {
-                                Image(systemName: "wallet.pass")
+                                Image(systemName: selectedWallet.iconName)
                             }
-                            Text(isConnecting ? "Connecting..." : "Connect Wallet")
+                            Text(isConnecting ? "Connecting..." : walletConfig.needsAppRestart ? "Restart Required" : "Connect \(selectedWallet.displayName)")
                         }
                         .font(.system(.body, weight: .medium))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(Color.blue)
+                        .background(walletConfig.needsAppRestart ? Color.orange : Color.blue)
                         .cornerRadius(12)
                     }
-                    .disabled(isConnecting)
+                    .disabled(isConnecting || walletConfig.needsAppRestart)
                     
                     Button("Cancel") {
                         dismiss()
@@ -442,29 +576,118 @@ struct ConnectWalletView: View {
                 }
             }
         }
+        .onAppear {
+            selectedWallet = walletConfig.selectedWallet
+        }
+
+        .alert("Connection Failed", isPresented: $showErrorAlert) {
+            Button("OK") {
+                showErrorAlert = false
+            }
+        } message: {
+            Text(connectionError ?? "Failed to connect to wallet. Please try again.")
+        }
     }
     
     private func connectWallet() {
         isConnecting = true
         
-        // Simulate wallet connection
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            // For demo purposes, use a sample address
-            // In a real app, this would integrate with WalletConnect or similar
-            let sampleAddress = "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
-            identityAddress = sampleAddress
-            
-            // Persist the address
-            do {
-                try KeychainManager.storeIdentityAddress(sampleAddress)
-                print("🔗 Persisted Wallet Address: \(Utils.truncateAddress(sampleAddress))")
-            } catch {
-                print("Failed to persist wallet address: \(error)")
+        // Establish connection with the selected wallet using CoinbaseWalletSDK
+        let cbwallet = CoinbaseWalletSDK.shared
+        
+        cbwallet.initiateHandshake(
+            initialActions: [
+                Action(jsonRpc: .eth_requestAccounts)
+            ]
+        ) { result, account in
+            DispatchQueue.main.async {
+                
+                switch result {
+                case .success(let response):
+                    print("🎉 Wallet connection successful")
+                    print("Response: \(response)")
+                    
+                    guard let account = account else {
+                        print("❌ No account returned from wallet")
+                        isConnecting = false
+                        return
+                    }
+                    
+                    print("📱 Connected to \(selectedWallet.displayName)")
+                    print("Account: \(account)")
+                    
+                    // Set the connected address as identity address
+                    identityAddress = account.address
+                    
+                    // Persist the address
+                    do {
+                        try KeychainManager.storeIdentityAddress(account.address)
+                        print("🔗 Persisted Wallet Address from \(selectedWallet.displayName): \(Utils.truncateAddress(account.address))")
+                    } catch {
+                        print("Failed to persist wallet address: \(error)")
+                    }
+                    
+                    isConnecting = false
+                    dismiss()
+                    
+                case .failure(let error):
+                    print("❌ Wallet connection failed: \(error)")
+                    connectionError = error.localizedDescription
+                    showErrorAlert = true
+                    isConnecting = false
+                }
             }
-            
-            isConnecting = false
-            dismiss()
         }
+    }
+}
+
+// MARK: - Wallet Option View
+struct WalletOptionView: View {
+    let wallet: SupportedWallet
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                Image(systemName: wallet.iconName)
+                    .font(.title2)
+                    .foregroundColor(isSelected ? .blue : .secondary)
+                    .frame(width: 32)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(wallet.displayName)
+                        .font(.system(.body, weight: .medium))
+                        .foregroundColor(.primary)
+                    
+                    Text("MWP Compatible")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.blue)
+                        .font(.title2)
+                } else {
+                    Image(systemName: "circle")
+                        .foregroundColor(.secondary)
+                        .font(.title2)
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? Color.blue.opacity(0.1) : Color(.systemGray6))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -504,7 +727,7 @@ struct EnterAddressView: View {
                         .padding()
                         .background(Color(.systemGray6))
                         .cornerRadius(8)
-                        .onChange(of: addressInput) { newValue in
+                        .onChange(of: addressInput) { _, newValue in
                             validateAddress(newValue)
                         }
                     
