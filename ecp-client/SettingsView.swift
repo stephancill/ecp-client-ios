@@ -14,9 +14,9 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @State private var privateKey: String = ""
-    @State private var ethereumAddress: String = ""
+    @State private var appAddress: String = ""
     @State private var isPrivateKeyVisible = false
-    @State private var identityAddress: String? = nil
+    @State private var authorAddress: String? = nil
     @State private var showConnectWallet = false
     @State private var showEnterAddress = false
     @State private var isApprovingIdentity = false
@@ -30,11 +30,11 @@ struct SettingsView: View {
             List {
                 Section(
                     header: Text("Identity"),
-                    footer: Text("Your Ethereum address for posting comments on behalf of to the Ethereum Comments Protocol. This can be connected from a wallet or manually entered.")
+                    footer: Text("The Ethereum account you want to post as.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 ) {
-                    if let address = identityAddress {
+                    if let address = authorAddress {
                         VStack(alignment: .leading, spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Connected Address")
@@ -76,7 +76,7 @@ struct SettingsView: View {
                                     
                                     Button(action: {
                                         Task {
-                                            await commentsService.checkApproval(identityAddress: address, appAddress: ethereumAddress)
+                                            await commentsService.checkApproval(authorAddress: address, appAddress: appAddress)
                                         }
                                     }) {
                                         Image(systemName: "arrow.clockwise")
@@ -95,41 +95,12 @@ struct SettingsView: View {
                         }
                     }
                 }
-                
-                if identityAddress != nil {
+
+                // Show approval section if author exists but is not approved
+                if let authorAddr = authorAddress, commentsService.isApproved != true {
                     Section {
                         Button(action: {
-                            identityAddress = nil
-                            // Remove from storage
-                            do {
-                                try KeychainManager.deleteIdentityAddress()
-                                print("🗑️ Removed identity address from storage")
-                            } catch {
-                                print("Failed to remove identity address: \(error)")
-                            }
-                        }) {
-                            HStack {
-                                Image(systemName: "xmark.circle")
-                                    .foregroundColor(.red)
-                                Text("Disconnect Identity")
-                                    .foregroundColor(.red)
-                                Spacer()
-                            }
-                        }
-                    } header: {
-                        Text("Identity Management")
-                    } footer: {
-                        Text("Disconnect your identity address to remove it from this device.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                // Show approval section if identity exists but is not approved
-                if let identityAddr = identityAddress, commentsService.isApproved != true {
-                    Section {
-                        Button(action: {
-                            approveIdentity(identityAddress: identityAddr)
+                            approveAuthor(authorAddress: authorAddr)
                         }) {
                             HStack {
                                 if isApprovingIdentity {
@@ -140,7 +111,7 @@ struct SettingsView: View {
                                     Image(systemName: "checkmark.shield")
                                         .foregroundColor(.green)
                                 }
-                                Text(isApprovingIdentity ? "Approving..." : "Approve Identity")
+                                Text(isApprovingIdentity ? "Approving..." : "Approve Author")
                                     .foregroundColor(.green)
                                 Spacer()
                                 if !isApprovingIdentity {
@@ -152,15 +123,45 @@ struct SettingsView: View {
                         }
                         .disabled(commentsService.isLoading || isApprovingIdentity)
                     } header: {
-                        Text("Identity Approval")
+                        Text("Author Approval")
                     } footer: {
-                        Text("Approve your identity address to enable posting comments. This will send a transaction to the Ethereum Comments Protocol contract.")
+                        Text("Approve your author address to enable posting comments. This will send a transaction to the Ethereum Comments Protocol contract.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                 }
                 
-                if identityAddress == nil {
+                if authorAddress != nil {
+                    Section {
+                        Button(action: {
+                            authorAddress = nil
+                            // Remove from storage
+                            do {
+                                try KeychainManager.deleteIdentityAddress()
+                            } catch {
+                                // Handle error silently
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "xmark.circle")
+                                    .foregroundColor(.red)
+                                Text("Disconnect Author")
+                                    .foregroundColor(.red)
+                                Spacer()
+                            }
+                        }
+                    } header: {
+                        Text("Author Management")
+                    } footer: {
+                        Text("Disconnect your author address to remove it from this device.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                
+                
+                if authorAddress == nil {
                     Section {
                         Button(action: {
                             showConnectWallet = true
@@ -179,7 +180,7 @@ struct SettingsView: View {
                     } header: {
                         Text("Wallet Connection")
                     } footer: {
-                        Text("Connect your wallet to post comments on behalf of to the Ethereum Comments Protocol.")
+                        Text("Import your account from a wallet installed on this device.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -202,7 +203,7 @@ struct SettingsView: View {
                     } header: {
                         Text("Manual Entry")
                     } footer: {
-                        Text("Enter an approved Ethereum address to post comments on behalf of to the Ethereum Comments Protocol.")
+                        Text("Import your account from an unsupported wallet.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -210,7 +211,7 @@ struct SettingsView: View {
                 
                 Section(
                     header: Text("App Account"),
-                    footer: Text("Your private key and derived Ethereum address used for posting comments on your behalf. Keep your private key secure.")
+                    footer: Text("Your unique app account that submits posts to Base. Fund it with ETH on Base to cover gas fees.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 ) {
@@ -260,7 +261,7 @@ struct SettingsView: View {
                                 .textCase(.uppercase)
                             
                             HStack {
-                                Text(Utils.truncateAddress(ethereumAddress))
+                                Text(Utils.truncateAddress(appAddress))
                                     .font(.system(.body, design: .monospaced))
                                     .textSelection(.enabled)
                                 
@@ -294,7 +295,7 @@ struct SettingsView: View {
                                 
                                 Button(action: {
                                     Task {
-                                        await balanceService.fetchBalance(for: ethereumAddress)
+                                        await balanceService.fetchBalance(for: appAddress)
                                     }
                                 }) {
                                     Image(systemName: "arrow.clockwise")
@@ -310,7 +311,7 @@ struct SettingsView: View {
                             Label("Copy Private Key", systemImage: "doc.on.doc")
                         }
                         Button(action: {
-                            UIPasteboard.general.string = ethereumAddress
+                            UIPasteboard.general.string = appAddress
                         }) {
                             Label("Copy Address", systemImage: "doc.on.doc")
                         }
@@ -328,10 +329,10 @@ struct SettingsView: View {
             }
         }
         .sheet(isPresented: $showConnectWallet) {
-            ConnectWalletView(identityAddress: $identityAddress)
+            ConnectWalletView(authorAddress: $authorAddress, appAddress: appAddress, commentsService: commentsService)
         }
         .sheet(isPresented: $showEnterAddress) {
-            EnterAddressView(identityAddress: $identityAddress)
+            EnterAddressView(authorAddress: $authorAddress, appAddress: appAddress, commentsService: commentsService)
         }
         .alert("Approval Failed", isPresented: $showApprovalError) {
             Button("OK") {
@@ -342,7 +343,7 @@ struct SettingsView: View {
         }
         .onAppear {
             loadPrivateKey()
-            loadIdentityAddress()
+            loadAuthorAddress()
         }
     }
     
@@ -363,25 +364,17 @@ struct SettingsView: View {
             // Ensure the private key has the 0x prefix
             let formattedPrivateKey = privateKey.hasPrefix("0x") ? privateKey : "0x\(privateKey)"
             let ethereumPrivateKey = try EthereumPrivateKey(hexPrivateKey: formattedPrivateKey)
-            ethereumAddress = ethereumPrivateKey.address.hex(eip55: true)
-            
-            // Print the address for easy copying
-            print("🔗 Ethereum Address: \(ethereumAddress)")
+            appAddress = ethereumPrivateKey.address.hex(eip55: true)
             
             // Fetch balance for the derived address
             Task {
-                await balanceService.fetchBalance(for: ethereumAddress)
+                await balanceService.fetchBalance(for: appAddress)
             }
             
-            // Check approval status if identity address exists
-            if let identityAddress = identityAddress {
-                Task {
-                    await commentsService.checkApproval(identityAddress: identityAddress, appAddress: ethereumAddress)
-                }
-            }
+            // Check approval now that app address is ready
+            checkApprovalIfReady()
         } catch {
-            print("Failed to derive Ethereum address: \(error)")
-            ethereumAddress = "Error deriving address"
+            appAddress = "" // Set to empty instead of error message
         }
     }
     
@@ -397,30 +390,42 @@ struct SettingsView: View {
             privateKey = privateKeyHex
             deriveEthereumAddress()
         } catch {
-            // Handle error - could show an alert here
-            print("Failed to store private key: \(error)")
+            // Handle error silently
         }
     }
     
-    private func loadIdentityAddress() {
+    private func loadAuthorAddress() {
         do {
-            identityAddress = try KeychainManager.retrieveIdentityAddress()
-            if let address = identityAddress {
-                print("🔗 Loaded Identity Address: \(Utils.truncateAddress(address))")
-                
-                // Check approval status when identity is loaded
-                Task {
-                    await commentsService.checkApproval(identityAddress: address, appAddress: ethereumAddress)
-                }
-            } else {
-                print("No identity address found in storage.")
+            authorAddress = try KeychainManager.retrieveIdentityAddress()
+            if let address = authorAddress {
+                // Check approval status when author is loaded
+                checkApprovalIfReady()
             }
         } catch {
-            print("Failed to load identity address: \(error)")
+            // Handle error silently
         }
     }
     
-    private func approveIdentity(identityAddress: String) {
+    private func checkApprovalIfReady() {
+        guard let authorAddr = authorAddress, !appAddress.isEmpty else {
+            return
+        }
+        
+        // Validate address formats before making the call
+        let addressPattern = "^0x[a-fA-F0-9]{40}$"
+        let authorValid = authorAddr.range(of: addressPattern, options: .regularExpression) != nil
+        let appValid = appAddress.range(of: addressPattern, options: .regularExpression) != nil
+        
+        guard authorValid && appValid else {
+            return
+        }
+        
+        Task {
+            await commentsService.checkApproval(authorAddress: authorAddr, appAddress: appAddress)
+        }
+    }
+    
+    private func approveAuthor(authorAddress: String) {
         isApprovingIdentity = true
         let cbwallet = CoinbaseWalletSDK.shared
         
@@ -428,7 +433,7 @@ struct SettingsView: View {
             // Create approval transaction data
             let expiry = Date().timeIntervalSince1970 + (100 * 365 * 24 * 60 * 60) // 100 years from now
             let transactionData = try commentsService.getApprovalTransactionData(
-                appAddress: ethereumAddress,
+                appAddress: appAddress,
                 expiry: expiry
             )
             
@@ -437,7 +442,7 @@ struct SettingsView: View {
                     actions: [
                         Action(jsonRpc: .wallet_switchEthereumChain(chainId: "8453")),
                         Action(jsonRpc: .eth_sendTransaction(
-                            fromAddress: identityAddress,
+                            fromAddress: authorAddress,
                             toAddress: "0xb262C9278fBcac384Ef59Fc49E24d800152E19b1",
                             weiValue: "0",
                             data: transactionData.hasPrefix("0x") ? transactionData : "0x" + transactionData,
@@ -450,7 +455,7 @@ struct SettingsView: View {
                             actionSource: .none
                         ))
                     ], 
-                    account: .init(chain: "base", networkId: 8453, address: identityAddress)
+                    account: .init(chain: "base", networkId: 8453, address: authorAddress)
                 )
             ) { result in
                 DispatchQueue.main.async {
@@ -458,18 +463,14 @@ struct SettingsView: View {
                     
                     switch result {
                     case .success(let response):
-                        print("🎉 Identity approval transaction sent successfully")
-                        print("Transaction hash: \(response)")
-                        
                         // Check approval status after a delay to allow transaction to be mined
                         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
                             Task {
-                                await self.commentsService.checkApproval(identityAddress: identityAddress, appAddress: self.ethereumAddress)
+                                await self.commentsService.checkApproval(authorAddress: authorAddress, appAddress: self.appAddress)
                             }
                         }
                         
                     case .failure(let error):
-                        print("❌ Failed to send approval transaction: \(error)")
                         self.approvalError = error.localizedDescription
                         self.showApprovalError = true
                     }
@@ -477,7 +478,6 @@ struct SettingsView: View {
             }
             
         } catch {
-            print("❌ Failed to create approval transaction data: \(error)")
             isApprovingIdentity = false
             approvalError = error.localizedDescription
             showApprovalError = true
@@ -487,11 +487,14 @@ struct SettingsView: View {
 
 struct ConnectWalletView: View {
     @Environment(\.dismiss) private var dismiss
-    @Binding var identityAddress: String?
+    @Binding var authorAddress: String?
+    let appAddress: String
+    let commentsService: CommentsContractService
     @State private var isConnecting = false
     @State private var selectedWallet: SupportedWallet = .coinbase
     @State private var connectionError: String?
     @State private var showErrorAlert = false
+    @State private var showRestartAlert = false
     @StateObject private var walletConfig = WalletConfigurationService.shared
     
     var body: some View {
@@ -537,7 +540,11 @@ struct ConnectWalletView: View {
                 
                 VStack(spacing: 12) {
                     Button(action: {
-                        connectWallet()
+                        if walletConfig.needsAppRestart {
+                            showRestartAlert = true
+                        } else {
+                            connectWallet()
+                        }
                     }) {
                         HStack {
                             if isConnecting {
@@ -547,7 +554,7 @@ struct ConnectWalletView: View {
                             } else {
                                 Image(systemName: selectedWallet.iconName)
                             }
-                            Text(isConnecting ? "Connecting..." : walletConfig.needsAppRestart ? "Restart Required" : "Connect \(selectedWallet.displayName)")
+                            Text(isConnecting ? "Connecting..." : walletConfig.needsAppRestart ? "App Restart Required" : "Connect \(selectedWallet.displayName)")
                         }
                         .font(.system(.body, weight: .medium))
                         .foregroundColor(.white)
@@ -556,7 +563,7 @@ struct ConnectWalletView: View {
                         .background(walletConfig.needsAppRestart ? Color.orange : Color.blue)
                         .cornerRadius(12)
                     }
-                    .disabled(isConnecting || walletConfig.needsAppRestart)
+                    .disabled(isConnecting)
                     
                     Button("Cancel") {
                         dismiss()
@@ -587,6 +594,17 @@ struct ConnectWalletView: View {
         } message: {
             Text(connectionError ?? "Failed to connect to wallet. Please try again.")
         }
+        .alert("App Restart Required", isPresented: $showRestartAlert) {
+            Button("Restart App") {
+                // Force quit the app
+                exit(0)
+            }
+            Button("Cancel", role: .cancel) {
+                showRestartAlert = false
+            }
+        } message: {
+            Text("The wallet configuration has changed and requires an app restart to take effect.")
+        }
     }
     
     private func connectWallet() {
@@ -604,34 +622,32 @@ struct ConnectWalletView: View {
                 
                 switch result {
                 case .success(let response):
-                    print("🎉 Wallet connection successful")
-                    print("Response: \(response)")
-                    
                     guard let account = account else {
-                        print("❌ No account returned from wallet")
                         isConnecting = false
                         return
                     }
                     
-                    print("📱 Connected to \(selectedWallet.displayName)")
-                    print("Account: \(account)")
-                    
-                    // Set the connected address as identity address
-                    identityAddress = account.address
+                    // Set the connected address as author address
+                    authorAddress = account.address
                     
                     // Persist the address
                     do {
                         try KeychainManager.storeIdentityAddress(account.address)
-                        print("🔗 Persisted Wallet Address from \(selectedWallet.displayName): \(Utils.truncateAddress(account.address))")
                     } catch {
-                        print("Failed to persist wallet address: \(error)")
+                        // Handle error silently
+                    }
+                    
+                    // Check approval status immediately after wallet connection
+                    if !appAddress.isEmpty {
+                        Task {
+                            await commentsService.checkApproval(authorAddress: account.address, appAddress: appAddress)
+                        }
                     }
                     
                     isConnecting = false
                     dismiss()
                     
                 case .failure(let error):
-                    print("❌ Wallet connection failed: \(error)")
                     connectionError = error.localizedDescription
                     showErrorAlert = true
                     isConnecting = false
@@ -693,7 +709,9 @@ struct WalletOptionView: View {
 
 struct EnterAddressView: View {
     @Environment(\.dismiss) private var dismiss
-    @Binding var identityAddress: String?
+    @Binding var authorAddress: String?
+    let appAddress: String
+    let commentsService: CommentsContractService
     @State private var addressInput = ""
     @State private var isValidAddress = false
     
@@ -743,8 +761,16 @@ struct EnterAddressView: View {
                 VStack(spacing: 12) {
                     Button(action: {
                         if isValidAddress {
-                            identityAddress = addressInput
-                            persistIdentityAddress(addressInput)
+                            authorAddress = addressInput
+                            persistAuthorAddress(addressInput)
+                            
+                            // Check approval status immediately after manual address entry
+                            if !appAddress.isEmpty {
+                                Task {
+                                    await commentsService.checkApproval(authorAddress: addressInput, appAddress: appAddress)
+                                }
+                            }
+                            
                             dismiss()
                         }
                     }) {
@@ -784,12 +810,11 @@ struct EnterAddressView: View {
         isValidAddress = address.range(of: pattern, options: .regularExpression) != nil
     }
     
-    private func persistIdentityAddress(_ address: String) {
+    private func persistAuthorAddress(_ address: String) {
         do {
             try KeychainManager.storeIdentityAddress(address)
-            print("�� Persisted Identity Address: \(Utils.truncateAddress(address))")
         } catch {
-            print("Failed to persist identity address: \(error)")
+            // Handle error silently
         }
     }
 }

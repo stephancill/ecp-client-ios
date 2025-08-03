@@ -208,6 +208,6 @@ class BalanceService: ObservableObject {
             balance = "Error"
         }
         
-                isLoading = false
+        isLoading = false
     }
 }

@@ -411,7 +411,10 @@ struct ContentView: View {
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $showingSettingsModal) {
+        .sheet(isPresented: $showingSettingsModal, onDismiss: {
+            // Reload identity address when settings sheet closes
+            loadCurrentUserAddress()
+        }) {
             SettingsView()
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
