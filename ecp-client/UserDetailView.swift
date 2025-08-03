@@ -25,6 +25,7 @@ struct UserDetailView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var scrollOffset: CGFloat = 0
     @State private var showHeaderAvatar: Bool = false
+    @State private var currentUserAddress: String?
     
     init(avatar: String?, username: String, address: String) {
         self.avatar = avatar
@@ -187,13 +188,21 @@ struct UserDetailView: View {
                         } else {
                             LazyVStack(spacing: 0) {
                                 ForEach(commentsService.comments) { comment in
-                                    CommentRowView(comment: comment, showRepliesButton: false)
-                                        .onAppear {
-                                            // Load more when approaching the end
-                                            if comment.id == commentsService.comments.last?.id {
-                                                commentsService.loadMoreCommentsIfNeeded()
-                                            }
+                                    CommentRowView(
+                                        comment: comment, 
+                                        showRepliesButton: false, 
+                                        currentUserAddress: currentUserAddress,
+                                        onCommentDeleted: {
+                                            // Refresh the comments list after deletion
+                                            commentsService.fetchComments(refresh: true)
                                         }
+                                    )
+                                    .onAppear {
+                                        // Load more when approaching the end
+                                        if comment.id == commentsService.comments.last?.id {
+                                            commentsService.loadMoreCommentsIfNeeded()
+                                        }
+                                    }
                                 }
                                 
                                 // Loading indicator at bottom
@@ -264,6 +273,18 @@ struct UserDetailView: View {
         .onAppear {
             // Fetch comments when view appears
             commentsService.fetchComments(refresh: true)
+            // Load current user's identity address
+            loadCurrentUserAddress()
+        }
+    }
+    
+    // MARK: - Private Methods
+    private func loadCurrentUserAddress() {
+        do {
+            currentUserAddress = try KeychainManager.retrieveIdentityAddress()
+        } catch {
+            // Silently handle error - user might not have set up identity yet
+            currentUserAddress = nil
         }
     }
 }

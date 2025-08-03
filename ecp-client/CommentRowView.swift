@@ -6,19 +6,30 @@
 //
 
 import SwiftUI
+import Web3
 
 // MARK: - Comment Row View
 struct CommentRowView: View {
     let comment: Comment
     let showRepliesButton: Bool
+    let currentUserAddress: String?
     @State private var isExpanded = false
     @State private var showingRepliesSheet = false
     @State private var showingUserDetailSheet = false
+    @State private var showingDeleteConfirmation = false
+    @State private var isDeleting = false
+    @State private var deleteError: String?
+    @StateObject private var commentsService = CommentsContractService()
     @Environment(\.colorScheme) private var colorScheme
     
-    init(comment: Comment, showRepliesButton: Bool = true) {
+    // Callback for when comment is deleted
+    var onCommentDeleted: (() -> Void)?
+    
+    init(comment: Comment, showRepliesButton: Bool = true, currentUserAddress: String? = nil, onCommentDeleted: (() -> Void)? = nil) {
         self.comment = comment
         self.showRepliesButton = showRepliesButton
+        self.currentUserAddress = currentUserAddress
+        self.onCommentDeleted = onCommentDeleted
     }
     
     // Constants for text truncation
@@ -39,6 +50,12 @@ struct CommentRowView: View {
     // Computed property for trimmed content
     private var trimmedContent: String {
         return comment.content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    // Computed property to check if current user is the author
+    private var isCurrentUserComment: Bool {
+        guard let currentUserAddress = currentUserAddress else { return false }
+        return comment.author.address.lowercased() == currentUserAddress.lowercased()
     }
     
     // Computed property for deduplicated references (excluding farcaster mentions which are shown inline)
@@ -65,55 +82,76 @@ struct CommentRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Author section
-            Button(action: {
-                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                impactFeedback.impactOccurred()
-                showingUserDetailSheet = true
-            }) {
-                HStack {
-                    Group {
-                        if let imageUrl = comment.author.farcaster?.pfpUrl ?? comment.author.ens?.avatarUrl,
-                           !imageUrl.isEmpty {
-                            AsyncImage(url: URL(string: imageUrl)) { phase in
-                                switch phase {
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(width: 40, height: 40)
-                                        .clipShape(Circle())
-                                case .failure(_):
-                                    // Image failed to load, show blockies
-                                    BlockiesAvatarView(address: comment.author.address, size: 40)
-                                case .empty:
-                                    // Loading state - show a simple placeholder
-                                    Circle()
-                                        .fill(Color.gray.opacity(0.3))
-                                        .frame(width: 40, height: 40)
-                                @unknown default:
-                                    BlockiesAvatarView(address: comment.author.address, size: 40)
+            HStack {
+                Button(action: {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
+                    showingUserDetailSheet = true
+                }) {
+                    HStack {
+                        Group {
+                            if let imageUrl = comment.author.farcaster?.pfpUrl ?? comment.author.ens?.avatarUrl,
+                               !imageUrl.isEmpty {
+                                AsyncImage(url: URL(string: imageUrl)) { phase in
+                                    switch phase {
+                                    case .success(let image):
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 40, height: 40)
+                                            .clipShape(Circle())
+                                    case .failure(_):
+                                        // Image failed to load, show blockies
+                                        BlockiesAvatarView(address: comment.author.address, size: 40)
+                                    case .empty:
+                                        // Loading state - show a simple placeholder
+                                        Circle()
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 40, height: 40)
+                                    @unknown default:
+                                        BlockiesAvatarView(address: comment.author.address, size: 40)
+                                    }
                                 }
+                            } else {
+                                // No image URL available, show blockies immediately
+                                BlockiesAvatarView(address: comment.author.address, size: 40)
                             }
-                        } else {
-                            // No image URL available, show blockies immediately
-                            BlockiesAvatarView(address: comment.author.address, size: 40)
+                        }
+                        
+                        VStack(alignment: .leading) {
+                            Text(displayUsername)
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                            
+                            Text(comment.formattedDate)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
                     }
-                    
-                    VStack(alignment: .leading) {
-                        Text(displayUsername)
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                        
-                        Text(comment.formattedDate)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                
+                Spacer()
+                
+                // Kebab menu for current user's comments
+                if isCurrentUserComment {
+                    Menu {
+                        Button(role: .destructive, action: {
+                            showingDeleteConfirmation = true
+                        }) {
+                            Label("Delete", systemImage: "trash")
+                        }
+                        .disabled(isDeleting)
+                    } label: {
+                        Image(systemName: isDeleting ? "ellipsis.circle" : "ellipsis")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(isDeleting ? .gray : .secondary)
+                            .frame(width: 24, height: 24)
                     }
-                    
-                    Spacer()
+                    .sensoryFeedback(.impact, trigger: showingDeleteConfirmation)
+                    .disabled(isDeleting)
                 }
             }
-            .buttonStyle(.plain)
             
             // Content with max height and show more button
             VStack(alignment: .leading, spacing: 8) {
@@ -128,6 +166,8 @@ struct CommentRowView: View {
                         showingUserDetailSheet = true
                     }
                 )
+                .foregroundColor(isDeleting ? .gray : .primary)
+                .opacity(isDeleting ? 0.6 : 1.0)
                 
                 // Show more/less button - use trimmed content for length check
                 if shouldShowMoreButton {
@@ -201,6 +241,7 @@ struct CommentRowView: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
         .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
+        .disabled(isDeleting)
         .sheet(isPresented: $showingRepliesSheet) {
             RepliesView(parentComment: comment)
                 .presentationDetents([.medium, .large])
@@ -214,6 +255,106 @@ struct CommentRowView: View {
             )
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+        }
+        .alert("Delete Comment", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                deleteComment()
+            }
+            .disabled(isDeleting)
+        } message: {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Are you sure you want to delete this comment? This action cannot be undone.")
+                
+                if isDeleting {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Deleting...")
+                            .font(.caption)
+                    }
+                }
+                
+                if let deleteError = deleteError {
+                    Text("Error: \(deleteError)")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Delete Functionality
+    private func deleteComment() {
+        isDeleting = true
+        deleteError = nil
+        
+        Task {
+            do {
+                // Retrieve stored data from keychain
+                guard let identityAddress = try KeychainManager.retrieveIdentityAddress() else {
+                    throw KeychainManager.KeychainError.itemNotFound
+                }
+                let privateKey = try KeychainManager.retrievePrivateKey()
+                
+                // Derive app address from private key
+                let formattedPrivateKey = privateKey.hasPrefix("0x") ? privateKey : "0x\(privateKey)"
+                let ethereumPrivateKey = try EthereumPrivateKey(hexPrivateKey: formattedPrivateKey)
+                let appAddress = ethereumPrivateKey.address.hex(eip55: true)
+                
+                // Set deadline (1 hour from now)
+                let deadline = Date().timeIntervalSince1970 + 3600
+                
+                // Get the delete comment hash
+                let deleteHash = try await commentsService.getDeleteCommentHash(
+                    commentId: comment.id,
+                    author: identityAddress,
+                    app: appAddress,
+                    deadline: deadline
+                )
+                
+                // Convert delete hash to Data for signing
+                let deleteHashData = Data(hex: deleteHash)
+                
+                // Sign the delete hash for app signature
+                let signatureTuple = try ethereumPrivateKey.sign(hash: Array(deleteHashData))
+                
+                // Convert to canonical signature format (65-byte) for external utilities
+                let appSignature = Utils.toCanonicalSignature(signatureTuple)
+                
+                // Use 32-byte zero signature for author signature (similar to post comment)
+                let authorSignature = Data(count: 32)
+                
+                // Delete the comment
+                let txHash = try await commentsService.deleteComment(
+                    commentId: comment.id,
+                    appAddress: appAddress,
+                    deadline: deadline,
+                    authorSignature: authorSignature,
+                    appSignature: appSignature,
+                    privateKey: privateKey
+                )
+                
+                await MainActor.run {
+                    showingDeleteConfirmation = false
+                    // Notify parent to refresh the comments list
+                    onCommentDeleted?()
+                }
+                
+                print("✅ Comment deleted successfully. Transaction hash: \(txHash)")
+                
+            } catch KeychainManager.KeychainError.itemNotFound {
+                await MainActor.run {
+                    deleteError = "Please configure your identity and app settings first"
+                    isDeleting = false
+                }
+            } catch {
+                print("❌ Failed to delete comment: \(error)")
+                await MainActor.run {
+                    deleteError = "Failed to delete comment: \(error.localizedDescription)"
+                    isDeleting = false
+                }
+            }
         }
     }
     

@@ -19,6 +19,7 @@ struct Comment: Codable, Identifiable {
     let author: Author
     let content: String
     let createdAt: String
+    let deletedAt: String?
     let app: String
     let chainId: Int
     let references: [Reference]
@@ -162,7 +163,9 @@ class CommentsService: ObservableObject {
             
             let commentsResponse = try JSONDecoder().decode(CommentsResponse.self, from: data)
             
-            self.comments = commentsResponse.results
+            // Filter out deleted comments
+            let filteredComments = commentsResponse.results.filter { $0.deletedAt == nil }
+            self.comments = filteredComments
             
             self.currentPagination = commentsResponse.pagination
             self.endCursor = commentsResponse.pagination.hasNext ? commentsResponse.pagination.endCursor : nil
@@ -214,11 +217,14 @@ class CommentsService: ObservableObject {
                 do {
                     let commentsResponse = try JSONDecoder().decode(CommentsResponse.self, from: data)
                     
+                    // Filter out deleted comments
+                    let filteredResults = commentsResponse.results.filter { $0.deletedAt == nil }
+                    
                     if self?.isRefreshing == true || self?.comments.isEmpty == true {
-                        self?.comments = commentsResponse.results
+                        self?.comments = filteredResults
                     } else {
-                        // Append new comments, avoiding duplicates
-                        let newComments = commentsResponse.results.filter { newComment in
+                        // Append new comments, avoiding duplicates and deleted comments
+                        let newComments = filteredResults.filter { newComment in
                             !(self?.comments.contains { $0.id == newComment.id } ?? false)
                         }
                         self?.comments.append(contentsOf: newComments)
@@ -237,7 +243,7 @@ class CommentsService: ObservableObject {
         let url: String
         switch serviceType {
         case .mainComments:
-            let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&excludeByModerationLabels=spam%2Csexual&limit=20&sort=desc&mode=nested"
+            let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&moderationStatus=approved&moderationStatus=pending&limit=20&sort=desc&mode=nested"
             url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
             
         case .replies(let parentId):
@@ -245,7 +251,7 @@ class CommentsService: ObservableObject {
             url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
             
         case .userComments(let address):
-            let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&excludeByModerationLabels=spam%2Csexual&limit=20&sort=desc&mode=nested&author=\(address)"
+            let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&moderationStatus=approved&moderationStatus=pending&limit=20&sort=desc&mode=nested&author=\(address)"
             url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
         }
         return url
@@ -270,6 +276,7 @@ struct ContentView: View {
     @StateObject private var commentsService = CommentsService()
     @State private var showingComposeModal = false
     @State private var showingSettingsModal = false
+    @State private var currentUserAddress: String?
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
@@ -304,15 +311,22 @@ struct ContentView: View {
                 } else {
                     List {
                         ForEach(commentsService.comments) { comment in
-                            CommentRowView(comment: comment)
-                                .listRowInsets(EdgeInsets())
-                                .listRowSeparator(.hidden)
-                                .onAppear {
-                                    // Load more when approaching the end
-                                    if comment.id == commentsService.comments.last?.id {
-                                        commentsService.loadMoreCommentsIfNeeded()
-                                    }
+                            CommentRowView(
+                                comment: comment, 
+                                currentUserAddress: currentUserAddress,
+                                onCommentDeleted: {
+                                    // Refresh the comments list after deletion
+                                    commentsService.fetchComments(refresh: true)
                                 }
+                            )
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .onAppear {
+                                // Load more when approaching the end
+                                if comment.id == commentsService.comments.last?.id {
+                                    commentsService.loadMoreCommentsIfNeeded()
+                                }
+                            }
                         }
                         
                         // Loading indicator at bottom
@@ -388,9 +402,14 @@ struct ContentView: View {
             }
         )
         .sheet(isPresented: $showingComposeModal) {
-            ComposeCommentView()
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+            ComposeCommentView(onCommentPosted: {
+                // Refresh the feed when comment is posted
+                Task {
+                    await commentsService.refreshComments()
+                }
+            })
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingSettingsModal) {
             SettingsView()
@@ -401,6 +420,18 @@ struct ContentView: View {
             if commentsService.comments.isEmpty {
                 commentsService.fetchComments(refresh: true)
             }
+            // Load current user's identity address
+            loadCurrentUserAddress()
+        }
+    }
+    
+    // MARK: - Private Methods
+    private func loadCurrentUserAddress() {
+        do {
+            currentUserAddress = try KeychainManager.retrieveIdentityAddress()
+        } catch {
+            // Silently handle error - user might not have set up identity yet
+            currentUserAddress = nil
         }
     }
 }

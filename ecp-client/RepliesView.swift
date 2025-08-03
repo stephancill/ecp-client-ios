@@ -13,6 +13,7 @@ struct RepliesView: View {
     @StateObject private var repliesService: CommentsService
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @State private var currentUserAddress: String?
     
     init(parentComment: Comment) {
         self.parentComment = parentComment
@@ -63,15 +64,23 @@ struct RepliesView: View {
                     List {
                         // Replies using the same styling as main comments
                         ForEach(repliesService.comments) { reply in
-                            CommentRowView(comment: reply, showRepliesButton: false)
-                                .listRowInsets(EdgeInsets())
-                                .listRowSeparator(.hidden)
-                                .onAppear {
-                                    // Load more when approaching the end
-                                    if reply.id == repliesService.comments.last?.id {
-                                        repliesService.loadMoreCommentsIfNeeded()
-                                    }
+                            CommentRowView(
+                                comment: reply, 
+                                showRepliesButton: false, 
+                                currentUserAddress: currentUserAddress,
+                                onCommentDeleted: {
+                                    // Refresh the replies list after deletion
+                                    repliesService.fetchComments(refresh: true)
                                 }
+                            )
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .onAppear {
+                                // Load more when approaching the end
+                                if reply.id == repliesService.comments.last?.id {
+                                    repliesService.loadMoreCommentsIfNeeded()
+                                }
+                            }
                         }
                         
                         // Loading indicator at bottom
@@ -102,6 +111,18 @@ struct RepliesView: View {
             if repliesService.comments.isEmpty {
                 repliesService.fetchComments(refresh: true)
             }
+            // Load current user's identity address
+            loadCurrentUserAddress()
+        }
+    }
+    
+    // MARK: - Private Methods
+    private func loadCurrentUserAddress() {
+        do {
+            currentUserAddress = try KeychainManager.retrieveIdentityAddress()
+        } catch {
+            // Silently handle error - user might not have set up identity yet
+            currentUserAddress = nil
         }
     }
 } 
