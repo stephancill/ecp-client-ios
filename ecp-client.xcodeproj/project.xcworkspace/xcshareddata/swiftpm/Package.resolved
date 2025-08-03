@@ -1,5 +1,5 @@
 {
-  "originHash" : "0fa7eeb19e5c5dd199103ce36527c92545a8a24b70ff49942e5784a3642d3b7d",
+  "originHash" : "c7a012e530453ca3b1042b99caf627343e904c07e8df69d979045c432e28ad8d",
   "pins" : [
     {
       "identity" : "bigint",
@@ -197,6 +197,15 @@
       "state" : {
         "revision" : "b63d24d465e237966c3f59f47dcac6c70fb0bca3",
         "version" : "1.6.1"
+      }
+    },
+    {
+      "identity" : "wallet-mobile-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/coinbase/wallet-mobile-sdk",
+      "state" : {
+        "revision" : "4293df51d3500b8e876ca4bf0d7548adf097569a",
+        "version" : "1.1.2"
       }
     },
     {

@@ -87,6 +87,7 @@ public protocol CommentsContract: EthereumContract {
     func getCommentId(commentData: CreateComment) -> SolidityInvocation
     func getDeleteCommentHash(commentId: Data, author: EthereumAddress, app: EthereumAddress, deadline: BigUInt) -> SolidityInvocation
     func deleteCommentWithSig(commentId: Data, app: EthereumAddress, deadline: BigUInt, authorSignature: Data, appSignature: Data) -> SolidityInvocation
+    func addApproval(app: EthereumAddress, expiry: BigUInt) -> SolidityInvocation
 }
 
 /// Generic implementation class for Comments contract
@@ -271,6 +272,21 @@ public extension CommentsContract {
             deadline,
             authorSignature,
             appSignature
+        )
+    }
+    
+    func addApproval(app: EthereumAddress, expiry: BigUInt) -> SolidityInvocation {
+        let inputs = [
+            SolidityFunctionParameter(name: "app", type: .address),
+            SolidityFunctionParameter(name: "expiry", type: .uint256)
+        ]
+        let outputs: [SolidityFunctionParameter] = []
+        
+        let method = SolidityNonPayableFunction(name: "addApproval", inputs: inputs, outputs: outputs, handler: self)
+        
+        return method.invoke(
+            app,
+            expiry
         )
     }
 }
@@ -576,5 +592,103 @@ public class CommentsContractService: ObservableObject {
         }
         
         return txHash.hex()
+    }
+    
+    public func addApproval(
+        appAddress: String,
+        expiry: TimeInterval,
+        privateKey: String
+    ) async throws -> String {
+        
+        let appAddr = try EthereumAddress(hex: appAddress, eip55: true)
+        let expiryBigUInt = BigUInt(expiry)
+        
+        // Create the transaction
+        let ethPrivateKey = try EthereumPrivateKey(hexPrivateKey: privateKey.hasPrefix("0x") ? privateKey : "0x\(privateKey)")
+        
+        let nonce: EthereumQuantity = try await withCheckedThrowingContinuation { continuation in
+            web3.eth.getTransactionCount(address: ethPrivateKey.address, block: .latest) { response in
+                switch response.status {
+                case .success:
+                    if let quantity = response.result {
+                        continuation.resume(returning: quantity)
+                    } else {
+                        continuation.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "No result returned"]))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+        
+        // Get gas price from the node
+        let gasPrice: EthereumQuantity = try await withCheckedThrowingContinuation { continuation in
+            web3.eth.gasPrice { response in
+                switch response.status {
+                case .success:
+                    if let price = response.result {
+                        continuation.resume(returning: price)
+                    } else {
+                        continuation.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "No gas price returned"]))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+        
+        let transaction = contract.addApproval(
+            app: appAddr,
+            expiry: expiryBigUInt
+        ).createTransaction(
+            nonce: nonce,
+            gasPrice: gasPrice,
+            maxFeePerGas: nil,
+            maxPriorityFeePerGas: nil,
+            gasLimit: 100000,
+            from: ethPrivateKey.address,
+            value: 0,
+            accessList: [:],
+            transactionType: .legacy
+        )
+        
+        guard let signedTransaction = try transaction?.sign(with: ethPrivateKey, chainId: 8453) else {
+            throw NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign transaction"])
+        }
+        
+        let txHash: EthereumData = try await withCheckedThrowingContinuation { continuation in
+            do {
+                try web3.eth.sendRawTransaction(transaction: signedTransaction) { response in
+                    switch response.status {
+                    case .success:
+                        if let hash = response.result {
+                            continuation.resume(returning: hash)
+                        } else {
+                            continuation.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "No transaction hash returned"]))
+                        }
+                    case .failure(let error):
+                        continuation.resume(throwing: error)
+                    }
+                }
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
+        
+        return txHash.hex()
+    }
+    
+    public func getApprovalTransactionData(appAddress: String, expiry: TimeInterval) throws -> String {
+        let appAddr = try EthereumAddress(hex: appAddress, eip55: true)
+        let expiryBigUInt = BigUInt(expiry)
+        
+        let invocation = contract.addApproval(app: appAddr, expiry: expiryBigUInt)
+        
+        // Get the encoded function data
+        guard let encodedData = invocation.encodeABI() else {
+            throw NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to encode transaction data"])
+        }
+        
+        return encodedData.hex()
     }
 } 
