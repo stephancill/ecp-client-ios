@@ -113,7 +113,7 @@ public extension CommentsContract {
     
     func isApproved(identityAddress: EthereumAddress, app: EthereumAddress) -> SolidityInvocation {
         let inputs = [
-            SolidityFunctionParameter(name: "identityAddress", type: .address),
+            SolidityFunctionParameter(name: "author", type: .address),
             SolidityFunctionParameter(name: "app", type: .address)
         ]
         let outputs = [
@@ -316,18 +316,48 @@ public class CommentsContractService: ObservableObject {
         }
     }
     
-    public func checkApproval(identityAddress: String, appAddress: String) async {
-        guard !identityAddress.isEmpty && !appAddress.isEmpty else { return }
+    public func checkApproval(authorAddress: String, appAddress: String) async {
+        guard !authorAddress.isEmpty && !appAddress.isEmpty else { return }
         
         isLoading = true
         error = nil
         
         do {
-            let identityAddr = try EthereumAddress(hex: identityAddress, eip55: true)
-            let appAddr = try EthereumAddress(hex: appAddress, eip55: true)
+            // Validate address format before creating EthereumAddress objects
+            let addressPattern = "^0x[a-fA-F0-9]{40}$"
+            let authorValid = authorAddress.range(of: addressPattern, options: .regularExpression) != nil
+            let appValid = appAddress.range(of: addressPattern, options: .regularExpression) != nil
             
-            await withCheckedContinuation { continuation in
-                contract.isApproved(identityAddress: identityAddr, app: appAddr).call { result, error in
+            guard authorValid else {
+                throw NSError(domain: "AddressValidation", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid author address format"])
+            }
+            
+            guard appValid else {
+                throw NSError(domain: "AddressValidation", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid app address format"])
+            }
+            
+            // Normalize addresses to lowercase and create EthereumAddress objects
+            let normalizedAuthor = authorAddress.lowercased()
+            let normalizedApp = appAddress.lowercased()
+            
+            let authorAddr = try EthereumAddress(hex: normalizedAuthor, eip55: false)
+            let appAddr = try EthereumAddress(hex: normalizedApp, eip55: false)
+            
+            // Perform contract call
+            await performContractCall(authorAddr: authorAddr, appAddr: appAddr)
+            
+        } catch {
+            self.error = "Failed to check approval: \(error.localizedDescription)"
+            self.isApproved = nil
+        }
+        
+        isLoading = false
+    }
+    
+    private func performContractCall(authorAddr: EthereumAddress, appAddr: EthereumAddress) async {
+        await withCheckedContinuation { continuation in
+            contract.isApproved(identityAddress: authorAddr, app: appAddr).call { result, error in
+                DispatchQueue.main.async {
                     if let error = error {
                         self.error = "Failed to check approval: \(error.localizedDescription)"
                         self.isApproved = nil
@@ -337,16 +367,10 @@ public class CommentsContractService: ObservableObject {
                         self.error = "Invalid response format"
                         self.isApproved = nil
                     }
-                    continuation.resume()
                 }
+                continuation.resume()
             }
-            
-        } catch {
-            self.error = "Failed to check approval: \(error.localizedDescription)"
-            isApproved = nil
         }
-        
-        isLoading = false
     }
     
     public func postComment(
