@@ -8,6 +8,7 @@
 import SwiftUI
 import Web3
 
+
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
@@ -18,7 +19,7 @@ struct SettingsView: View {
     @State private var showConnectWallet = false
     @State private var showEnterAddress = false
     @StateObject private var balanceService = BalanceService()
-    @StateObject private var approvalService = ApprovalService()
+    @StateObject private var commentsService = CommentsContractService()
     
     var body: some View {
         NavigationView {
@@ -51,7 +52,7 @@ struct SettingsView: View {
                                     .textCase(.uppercase)
                                 
                                 HStack {
-                                    if approvalService.isLoading {
+                                    if commentsService.isLoading {
                                         HStack(spacing: 8) {
                                             ProgressView()
                                                 .scaleEffect(0.8)
@@ -60,10 +61,10 @@ struct SettingsView: View {
                                         }
                                     } else {
                                         HStack(spacing: 8) {
-                                            Image(systemName: approvalService.isApproved == true ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                                .foregroundColor(approvalService.isApproved == true ? .green : .red)
-                                            Text(approvalService.isApproved == true ? "Approved" : "Not Approved")
-                                                .foregroundColor(approvalService.isApproved == true ? .green : .red)
+                                            Image(systemName: commentsService.isApproved == true ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                                .foregroundColor(commentsService.isApproved == true ? .green : .red)
+                                            Text(commentsService.isApproved == true ? "Approved" : "Not Approved")
+                                                .foregroundColor(commentsService.isApproved == true ? .green : .red)
                                         }
                                     }
                                     
@@ -71,13 +72,13 @@ struct SettingsView: View {
                                     
                                     Button(action: {
                                         Task {
-                                            await approvalService.checkApproval(identityAddress: address, appAddress: ethereumAddress)
+                                            await commentsService.checkApproval(identityAddress: address, appAddress: ethereumAddress)
                                         }
                                     }) {
                                         Image(systemName: "arrow.clockwise")
                                             .foregroundColor(.blue)
                                     }
-                                    .disabled(approvalService.isLoading)
+                                    .disabled(commentsService.isLoading)
                                 }
                             }
                         }
@@ -329,7 +330,7 @@ struct SettingsView: View {
             // Check approval status if identity address exists
             if let identityAddress = identityAddress {
                 Task {
-                    await approvalService.checkApproval(identityAddress: identityAddress, appAddress: ethereumAddress)
+                    await commentsService.checkApproval(identityAddress: identityAddress, appAddress: ethereumAddress)
                 }
             }
         } catch {
@@ -363,7 +364,7 @@ struct SettingsView: View {
                 
                 // Check approval status when identity is loaded
                 Task {
-                    await approvalService.checkApproval(identityAddress: address, appAddress: ethereumAddress)
+                    await commentsService.checkApproval(identityAddress: address, appAddress: ethereumAddress)
                 }
             } else {
                 print("No identity address found in storage.")

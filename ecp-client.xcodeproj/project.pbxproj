@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		D4BEED912E3EB3EB00A45974 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED902E3EB3EB00A45974 /* SettingsView.swift */; };
 		D4BEED932E3EB7E600A45974 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED922E3EB7E600A45974 /* Utils.swift */; };
+		D4BEED972E3F907100A45974 /* CommentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED962E3F907100A45974 /* CommentManager.swift */; };
+		D4BEED992E3FB10400A45974 /* CommentPollingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED982E3FB10400A45974 /* CommentPollingService.swift */; };
 		D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2A72E3E205A002B087F /* ecp_clientApp.swift */; };
 		D4C7B2AA2E3E205A002B087F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2A92E3E205A002B087F /* ContentView.swift */; };
 		D4C7B2AC2E3E205C002B087F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4C7B2AB2E3E205C002B087F /* Assets.xcassets */; };
@@ -32,6 +34,8 @@
 /* Begin PBXFileReference section */
 		D4BEED902E3EB3EB00A45974 /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D4BEED922E3EB7E600A45974 /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		D4BEED962E3F907100A45974 /* CommentManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentManager.swift; sourceTree = "<group>"; };
+		D4BEED982E3FB10400A45974 /* CommentPollingService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentPollingService.swift; sourceTree = "<group>"; };
 		D4C7B2A42E3E205A002B087F /* ecp-client.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ecp-client.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D4C7B2A72E3E205A002B087F /* ecp_clientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ecp_clientApp.swift; sourceTree = "<group>"; };
 		D4C7B2A92E3E205A002B087F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -91,6 +95,8 @@
 				D4C7B2C52E3E9DD8002B087F /* CommentSkeletonView.swift */,
 				D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */,
 				D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */,
+				D4BEED962E3F907100A45974 /* CommentManager.swift */,
+				D4BEED982E3FB10400A45974 /* CommentPollingService.swift */,
 				D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */,
 				D4BEED902E3EB3EB00A45974 /* SettingsView.swift */,
 				D4BEED922E3EB7E600A45974 /* Utils.swift */,
@@ -193,6 +199,7 @@
 				D4C7B2D92E3EAFD9002B087F /* KeychainManager.swift in Sources */,
 				D4C7B2CF2E3E9DD8002B087F /* CommentRowView.swift in Sources */,
 				D4C7B2AA2E3E205A002B087F /* ContentView.swift in Sources */,
+				D4BEED992E3FB10400A45974 /* CommentPollingService.swift in Sources */,
 				D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */,
 				D4C7B2CB2E3E9DD8002B087F /* CommentSkeletonView.swift in Sources */,
 				D4BEED932E3EB7E600A45974 /* Utils.swift in Sources */,
@@ -203,6 +210,7 @@
 				D4C7B2C22E3E9DB5002B087F /* BlockiesAvatarView.swift in Sources */,
 				D4C7B2D02E3E9DD8002B087F /* ParsedContentView.swift in Sources */,
 				D4C7B2C02E3E67D9002B087F /* UserDetailView.swift in Sources */,
+				D4BEED972E3F907100A45974 /* CommentManager.swift in Sources */,
 				D4C7B2C42E3E9DBB002B087F /* ContentParser.swift in Sources */,
 				D4C7B2B92E3E2C62002B087F /* ComposeCommentView.swift in Sources */,
 			);

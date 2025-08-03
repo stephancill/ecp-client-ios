@@ -6,11 +6,17 @@
 //
 
 import SwiftUI
+import Web3
 
 struct ComposeCommentView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var commentText = ""
     @State private var isPosting = false
+    @State private var errorMessage: String?
+    @StateObject private var commentsService = CommentsContractService()
+    @StateObject private var pollingService = CommentPollingService()
+    
+    var onCommentPosted: (() -> Void)?
     
     var body: some View {
         NavigationView {
@@ -51,6 +57,45 @@ struct ComposeCommentView: View {
                         .foregroundColor(commentText.count > 500 ? .red : .secondary)
                 }
                 
+                // Error Message
+                if let errorMessage = errorMessage {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 4)
+                }
+                
+                // Polling Status
+                if pollingService.isPolling {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Waiting for comment to appear...")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 4)
+                }
+                
+                // Polling Error
+                if let pollingError = pollingService.pollingError {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        Text(pollingError)
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 4)
+                }
+                
                 Spacer()
             }
             .padding(20)
@@ -58,7 +103,10 @@ struct ComposeCommentView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
+                    Button(pollingService.isPolling ? "Dismiss" : "Cancel") {
+                        if pollingService.isPolling {
+                            pollingService.stopPolling()
+                        }
                         dismiss()
                     }
                 }
@@ -67,21 +115,109 @@ struct ComposeCommentView: View {
                     Button("Post") {
                         postComment()
                     }
-                    .disabled(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting)
-                    .opacity(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting ? 0.6 : 1.0)
+                    .disabled(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling)
+                    .opacity(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling ? 0.6 : 1.0)
                 }
             }
+        }
+        .onDisappear {
+            // Stop polling when view is dismissed
+            pollingService.stopPolling()
         }
     }
     
     private func postComment() {
         isPosting = true
+        errorMessage = nil
         
-        // TODO: Implement actual comment posting to the API
-        // For now, just simulate posting
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            isPosting = false
-            dismiss()
+        Task {
+            do {
+                // Retrieve stored data from keychain
+                guard let identityAddress = try KeychainManager.retrieveIdentityAddress() else {
+                    throw KeychainManager.KeychainError.itemNotFound
+                }
+                let privateKey = try KeychainManager.retrievePrivateKey()
+                
+                // Derive app address from private key
+                let formattedPrivateKey = privateKey.hasPrefix("0x") ? privateKey : "0x\(privateKey)"
+                let ethereumPrivateKey = try EthereumPrivateKey(hexPrivateKey: formattedPrivateKey)
+                let appAddress = ethereumPrivateKey.address.hex(eip55: true)
+                
+                // Create comment parameters once to ensure consistency between getCommentId and postComment
+                let commentParams = CommentParams(
+                    identityAddress: identityAddress,
+                    appAddress: appAddress,
+                    channelId: 0,
+                    content: commentText,
+                    targetUri: ""
+                )
+                
+                // First, get the comment ID using the same parameters
+                let commentId = try await commentsService.getCommentId(params: commentParams)
+                
+                // Convert comment ID hex string to Data for signing
+                let commentIdData = Data(hex: commentId)
+                
+                // Sign the comment ID (convert Data to Array<UInt8>)
+                let signatureTuple = try ethereumPrivateKey.sign(hash: Array(commentIdData))
+                
+                // Convert to compact signature format (64-byte)
+                let compactSignature = Utils.toCompactSignature(signatureTuple)
+                // Convert to canonical signature format (65-byte) for external utilities
+                let canonicalSignature = Utils.toCanonicalSignature(signatureTuple)
+                
+                // Post the comment using the same parameters to ensure consistent comment ID
+                let txHash = try await commentsService.postComment(
+                    params: commentParams,
+                    appSignature: canonicalSignature,
+                    privateKey: privateKey
+                )
+                
+                // Start polling for the comment to appear in the feed
+                await MainActor.run {
+                    isPosting = false
+                    // Don't dismiss yet, show polling status
+                }
+                
+                // Start polling for the comment
+                pollingService.startPolling(
+                    commentId: commentId,
+                    onSuccess: {
+                        // Comment found! Refresh feed first, then dismiss
+                        onCommentPosted?()
+                        // Small delay to ensure refresh starts before dismissing
+                        Task {
+                            try await Task.sleep(nanoseconds: UInt64(0.1 * 1_000_000_000)) // 100ms
+                            await MainActor.run {
+                                dismiss()
+                            }
+                        }
+                    },
+                    onTimeout: {
+                        // Polling timed out, still refresh feed in case comment appeared
+                        onCommentPosted?()
+                        // Give user a moment to see the error message, then dismiss
+                        Task {
+                            try await Task.sleep(nanoseconds: UInt64(3 * 1_000_000_000)) // 3 seconds
+                            await MainActor.run {
+                                dismiss()
+                            }
+                        }
+                    }
+                )
+                
+            } catch KeychainManager.KeychainError.itemNotFound {
+                await MainActor.run {
+                    errorMessage = "Please configure your identity and app settings first"
+                    isPosting = false
+                }
+            } catch {
+                print("❌ Failed to post comment: \(error)")
+                await MainActor.run {
+                    errorMessage = "Failed to post comment: \(error.localizedDescription)"
+                    isPosting = false
+                }
+            }
         }
     }
 }
