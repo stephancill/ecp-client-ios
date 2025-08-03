@@ -38,10 +38,10 @@ struct CommentRowView: View {
     
     // Computed property for consistent username display
     private var displayUsername: String {
-        if let username = comment.author.farcaster?.username, !username.hasPrefix("!") {
-            return username
-        } else if let ensName = comment.author.ens?.name {
+        if let ensName = comment.author.ens?.name {
             return ensName
+        } else if let username = comment.author.farcaster?.username, !username.hasPrefix("!") {
+            return username
         } else {
             return truncateAddress(comment.author.address)
         }
@@ -90,7 +90,7 @@ struct CommentRowView: View {
                 }) {
                     HStack {
                         Group {
-                            if let imageUrl = comment.author.farcaster?.pfpUrl ?? comment.author.ens?.avatarUrl,
+                            if let imageUrl = comment.author.ens?.avatarUrl ?? comment.author.farcaster?.pfpUrl,
                                !imageUrl.isEmpty {
                                 AsyncImage(url: URL(string: imageUrl)) { phase in
                                     switch phase {
@@ -249,7 +249,7 @@ struct CommentRowView: View {
         }
         .sheet(isPresented: $showingUserDetailSheet) {
             UserDetailView(
-                avatar: comment.author.farcaster?.pfpUrl ?? comment.author.ens?.avatarUrl,
+                avatar: comment.author.ens?.avatarUrl ?? comment.author.farcaster?.pfpUrl,
                 username: displayUsername,
                 address: comment.author.address
             )
