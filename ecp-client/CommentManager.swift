@@ -379,9 +379,8 @@ public class CommentsContractService: ObservableObject {
         privateKey: String
     ) async throws -> String {
         
-        let identityAddr = try EthereumAddress(hex: params.identityAddress, eip55: true)
-        let appAddr = try EthereumAddress(hex: params.appAddress, eip55: true)
-        
+        let identityAddr = try EthereumAddress(hex: params.identityAddress, eip55: false)
+        let appAddr = try EthereumAddress(hex: params.appAddress, eip55: false)
         // Create comment data
         let commentDeadline = BigUInt(params.deadline)
         let parentId = params.parentId ?? Data(count: 32) // Empty parent ID for top-level comments
@@ -397,9 +396,8 @@ public class CommentsContractService: ObservableObject {
             metadata: params.metadata,
             targetUri: params.targetUri
         )
-        
         // Create the transaction
-        let ethPrivateKey = try EthereumPrivateKey(hexPrivateKey: privateKey.hasPrefix("0x") ? privateKey : "0x\(privateKey)")
+        let ethPrivateKey = try EthereumPrivateKey(hexPrivateKey: privateKey.hasPrefix("0x") ? privateKey : "0x\(privateKey)")        
         
         let nonce: EthereumQuantity = try await withCheckedThrowingContinuation { continuation in
             web3.eth.getTransactionCount(address: ethPrivateKey.address, block: .latest) { response in
@@ -415,6 +413,8 @@ public class CommentsContractService: ObservableObject {
                 }
             }
         }
+        
+        print("🔧 Got transaction nonce: \(nonce.quantity)")
         
         // Get gas price from the node
         let gasPrice: EthereumQuantity = try await withCheckedThrowingContinuation { continuation in
@@ -432,11 +432,12 @@ public class CommentsContractService: ObservableObject {
             }
         }
         
-        let transaction = contract.postCommentWithSig(
+        let invocation = contract.postCommentWithSig(
             commentData: commentData,
             authorSignature: Data(count: 32),
             appSignature: appSignature
-        ).createTransaction(
+        )
+        let transaction = invocation.createTransaction(
             nonce: nonce,
             gasPrice: gasPrice,
             maxFeePerGas: nil,
@@ -476,9 +477,8 @@ public class CommentsContractService: ObservableObject {
     
     public func getCommentId(params: CommentParams) async throws -> String {
         
-        let identityAddr = try EthereumAddress(hex: params.identityAddress, eip55: true)
-        let appAddr = try EthereumAddress(hex: params.appAddress, eip55: true)
-        
+        let identityAddr = try EthereumAddress(hex: params.identityAddress, eip55: false)
+        let appAddr = try EthereumAddress(hex: params.appAddress, eip55: false)
         // Create comment data
         let commentDeadline = BigUInt(params.deadline)
         let commentParentId = params.parentId ?? Data(count: 32) // Empty parent ID for top-level comments
@@ -500,7 +500,8 @@ public class CommentsContractService: ObservableObject {
                 if let error = error {
                     continuation.resume(throwing: error)
                 } else if let result = result, let commentIdData = result[""] as? Data {
-                    continuation.resume(returning: commentIdData.toHexString())
+                    let commentIdHex = commentIdData.toHexString()
+                    continuation.resume(returning: commentIdHex)
                 } else {
                     continuation.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"]))
                 }
@@ -510,8 +511,8 @@ public class CommentsContractService: ObservableObject {
     
     public func getDeleteCommentHash(commentId: String, author: String, app: String, deadline: TimeInterval) async throws -> String {
         let commentIdData = Data(hex: commentId)
-        let authorAddr = try EthereumAddress(hex: author, eip55: true)
-        let appAddr = try EthereumAddress(hex: app, eip55: true)
+        let authorAddr = try EthereumAddress(hex: author, eip55: false)
+        let appAddr = try EthereumAddress(hex: app, eip55: false)
         let deadlineBigUInt = BigUInt(deadline)
         
         return try await withCheckedThrowingContinuation { continuation in
@@ -537,7 +538,7 @@ public class CommentsContractService: ObservableObject {
     ) async throws -> String {
         
         let commentIdData = Data(hex: commentId)
-        let appAddr = try EthereumAddress(hex: appAddress, eip55: true)
+        let appAddr = try EthereumAddress(hex: appAddress, eip55: false)
         let deadlineBigUInt = BigUInt(deadline)
         
         // Create the transaction
@@ -624,7 +625,7 @@ public class CommentsContractService: ObservableObject {
         privateKey: String
     ) async throws -> String {
         
-        let appAddr = try EthereumAddress(hex: appAddress, eip55: true)
+        let appAddr = try EthereumAddress(hex: appAddress, eip55: false)
         let expiryBigUInt = BigUInt(expiry)
         
         // Create the transaction
@@ -703,7 +704,7 @@ public class CommentsContractService: ObservableObject {
     }
     
     public func getApprovalTransactionData(appAddress: String, expiry: TimeInterval) throws -> String {
-        let appAddr = try EthereumAddress(hex: appAddress, eip55: true)
+        let appAddr = try EthereumAddress(hex: appAddress, eip55: false)
         let expiryBigUInt = BigUInt(expiry)
         
         let invocation = contract.addApproval(app: appAddr, expiry: expiryBigUInt)
