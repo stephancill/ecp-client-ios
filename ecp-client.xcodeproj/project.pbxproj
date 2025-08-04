@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D4542E342E40AA47007F1A6C /* IdentityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4542E332E40AA46007F1A6C /* IdentityService.swift */; };
 		D4BEED912E3EB3EB00A45974 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED902E3EB3EB00A45974 /* SettingsView.swift */; };
 		D4BEED932E3EB7E600A45974 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED922E3EB7E600A45974 /* Utils.swift */; };
 		D4BEED972E3F907100A45974 /* CommentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED962E3F907100A45974 /* CommentManager.swift */; };
@@ -34,6 +35,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D4542E332E40AA46007F1A6C /* IdentityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityService.swift; sourceTree = "<group>"; };
 		D4BEED902E3EB3EB00A45974 /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D4BEED922E3EB7E600A45974 /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		D4BEED962E3F907100A45974 /* CommentManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentManager.swift; sourceTree = "<group>"; };
@@ -102,6 +104,7 @@
 				D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */,
 				D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */,
 				D4BEED962E3F907100A45974 /* CommentManager.swift */,
+				D4542E332E40AA46007F1A6C /* IdentityService.swift */,
 				D4BEED9E2E3FD11100A45974 /* WalletConfigurationService.swift */,
 				D4BEED982E3FB10400A45974 /* CommentPollingService.swift */,
 				D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */,
@@ -223,6 +226,7 @@
 				D4BEED972E3F907100A45974 /* CommentManager.swift in Sources */,
 				D4C7B2C42E3E9DBB002B087F /* ContentParser.swift in Sources */,
 				D4C7B2B92E3E2C62002B087F /* ComposeCommentView.swift in Sources */,
+				D4542E342E40AA47007F1A6C /* IdentityService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

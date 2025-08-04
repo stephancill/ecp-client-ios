@@ -13,38 +13,93 @@ struct ComposeCommentView: View {
     @State private var commentText = ""
     @State private var isPosting = false
     @State private var errorMessage: String?
+    @State private var showingSettings = false
     @StateObject private var commentsService = CommentsContractService()
     @StateObject private var pollingService = CommentPollingService()
     
+    let identityService: IdentityService
     var onCommentPosted: (() -> Void)?
     
     var body: some View {
         NavigationView {
             VStack(alignment: .leading, spacing: 16) {
-                // Text Editor with Avatar
-                HStack(alignment: .top, spacing: 12) {
-                    // Placeholder Avatar
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 40, height: 40)
-                        .overlay(
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.gray)
-                        )
-                    
-                    // Text Editor
-                    ZStack(alignment: .topLeading) {
-                        TextEditor(text: $commentText)
-                            .font(.body)
-                            .frame(minHeight: 80)
+                if identityService.isCheckingIdentity {
+                    // Loading state while checking configuration
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.2)
                         
-                        if commentText.isEmpty {
-                            Text("What's your take?")
-                                .foregroundColor(.secondary)
+                        Text("Checking configuration...")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding()
+                } else if !identityService.isIdentityConfigured {
+                    // No identity configured - show message and settings button
+                    VStack(spacing: 20) {
+                        Spacer()
+                        
+                        VStack(spacing: 16) {
+                            Image(systemName: "person.crop.circle.badge.exclamationmark")
+                                .font(.system(size: 48))
+                                .foregroundColor(.orange)
+                            
+                            Text("Configure identity and approval to post")
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                            
+                            Text("You need to configure your identity address and get approval in settings before you can post comments.")
                                 .font(.body)
-                                .padding(.top, 8)
-                                .padding(.leading, 4)
-                                .allowsHitTesting(false)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        
+                        Button(action: {
+                            showingSettings = true
+                        }) {
+                            HStack {
+                                Image(systemName: "gearshape")
+                                Text("Open Settings")
+                            }
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .cornerRadius(12)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(20)
+                } else {
+                    // Identity configured - show normal compose interface
+                    // Text Editor with Avatar
+                    HStack(alignment: .top, spacing: 12) {
+                        // Placeholder Avatar
+                        Circle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: 40, height: 40)
+                            .overlay(
+                                Image(systemName: "person.fill")
+                                    .foregroundColor(.gray)
+                            )
+                        
+                        // Text Editor
+                        ZStack(alignment: .topLeading) {
+                            TextEditor(text: $commentText)
+                                .font(.body)
+                                .frame(minHeight: 80)
+                            
+                            if commentText.isEmpty {
+                                Text("What's your take?")
+                                    .foregroundColor(.secondary)
+                                    .font(.body)
+                                    .padding(.top, 8)
+                                    .padding(.leading, 4)
+                                    .allowsHitTesting(false)
+                            }
                         }
                     }
                 }
@@ -112,20 +167,34 @@ struct ComposeCommentView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Post") {
-                        postComment()
+                    if identityService.isIdentityConfigured {
+                        Button("Post") {
+                            postComment()
+                        }
+                        .disabled(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling)
+                        .opacity(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling ? 0.6 : 1.0)
                     }
-                    .disabled(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling)
-                    .opacity(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling ? 0.6 : 1.0)
                 }
             }
+        }
+        .sheet(isPresented: $showingSettings, onDismiss: {
+            // Re-check identity configuration when settings sheet is dismissed
+            Task {
+                await identityService.checkIdentityConfiguration()
+            }
+        }) {
+            SettingsView()
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
         .onDisappear {
             // Stop polling when view is dismissed
             pollingService.stopPolling()
         }
     }
-    
+}
+
+extension ComposeCommentView {
     private func postComment() {
         isPosting = true
         errorMessage = nil
@@ -208,7 +277,7 @@ struct ComposeCommentView: View {
                 
             } catch KeychainManager.KeychainError.itemNotFound {
                 await MainActor.run {
-                    errorMessage = "Please configure your identity and app settings first"
+                    errorMessage = "Please configure your identity address and get approval in settings first"
                     isPosting = false
                 }
             } catch {
@@ -223,7 +292,6 @@ struct ComposeCommentView: View {
 }
 
 
-
 #Preview {
-    ComposeCommentView()
+    ComposeCommentView(identityService: IdentityService())
 } 
