@@ -341,7 +341,7 @@ struct SettingsView: View {
                                     Image(systemName: "arrow.up.circle")
                                         .foregroundColor(.green)
                                 }
-                                Text(isFundingAppAccount ? "Sending..." : "Send 0.00003 ETH to App Account")
+                                Text(isFundingAppAccount ? "Sending..." : "Fund from wallet")
                                     .foregroundColor(.green)
                                 Spacer()
                                 if !isFundingAppAccount {
