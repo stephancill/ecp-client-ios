@@ -30,9 +30,12 @@ struct Comment: Codable, Identifiable {
     var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        formatter.timeZone = TimeZone(abbreviation: "UTC")
+        
         if let date = formatter.date(from: createdAt) {
             let relativeFormatter = RelativeDateTimeFormatter()
-            relativeFormatter.dateTimeStyle = .named  
+            relativeFormatter.dateTimeStyle = .named
+            relativeFormatter.unitsStyle = .abbreviated
             return relativeFormatter.localizedString(for: date, relativeTo: Date())
         }
         return createdAt
