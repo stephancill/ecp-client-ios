@@ -22,6 +22,9 @@ struct SettingsView: View {
     @State private var isApprovingIdentity = false
     @State private var approvalError: String?
     @State private var showApprovalError = false
+    @State private var isFundingAppAccount = false
+    @State private var fundingError: String?
+    @State private var showFundingError = false
     @StateObject private var balanceService = BalanceService()
     @StateObject private var commentsService = CommentsContractService()
     
@@ -317,6 +320,40 @@ struct SettingsView: View {
                         }
                     }
                 }
+                
+                // Fund App Account Section - Only show when wallet is connected
+                if authorAddress != nil {
+                    Section(
+                        header: Text("Fund App Account"),
+                        footer: Text("Send 0.00003 ETH to your app account to cover gas fees for posting comments.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    ) {
+                        Button(action: {
+                            fundAppAccount()
+                        }) {
+                            HStack {
+                                if isFundingAppAccount {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                        .foregroundColor(.green)
+                                } else {
+                                    Image(systemName: "arrow.up.circle")
+                                        .foregroundColor(.green)
+                                }
+                                Text(isFundingAppAccount ? "Sending..." : "Send 0.00003 ETH to App Account")
+                                    .foregroundColor(.green)
+                                Spacer()
+                                if !isFundingAppAccount {
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        .disabled(isFundingAppAccount)
+                    }
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
@@ -340,6 +377,13 @@ struct SettingsView: View {
             }
         } message: {
             Text(approvalError ?? "Failed to approve identity. Please try again.")
+        }
+        .alert("Funding Failed", isPresented: $showFundingError) {
+            Button("OK") {
+                showFundingError = false
+            }
+        } message: {
+            Text(fundingError ?? "Failed to send ETH to app account. Please try again.")
         }
         .onAppear {
             loadPrivateKey()
@@ -481,6 +525,57 @@ struct SettingsView: View {
             isApprovingIdentity = false
             approvalError = error.localizedDescription
             showApprovalError = true
+        }
+    }
+    
+    private func fundAppAccount() {
+        guard let authorAddr = authorAddress else { return }
+        
+        isFundingAppAccount = true
+        let cbwallet = CoinbaseWalletSDK.shared
+        
+        // Convert 0.00003 ETH to wei (1 ETH = 10^18 wei)
+        let ethAmount = "0.00003"
+        let weiAmount = String(format: "%.0f", Double(ethAmount)! * 1e18)
+        
+        cbwallet.makeRequest(
+            Request(
+                actions: [
+                    Action(jsonRpc: .wallet_switchEthereumChain(chainId: "8453")),
+                    Action(jsonRpc: .eth_sendTransaction(
+                        fromAddress: authorAddr,
+                        toAddress: appAddress,
+                        weiValue: weiAmount,
+                        data: "0x",
+                        nonce: nil,
+                        gasPriceInWei: nil,
+                        maxFeePerGas: nil,
+                        maxPriorityFeePerGas: nil,
+                        gasLimit: nil,
+                        chainId: "8453",
+                        actionSource: .none
+                    ))
+                ], 
+                account: .init(chain: "base", networkId: 8453, address: authorAddr)
+            )
+        ) { result in
+            DispatchQueue.main.async {
+                self.isFundingAppAccount = false
+                
+                switch result {
+                case .success(let response):
+                    // Refresh balance after a delay to allow transaction to be mined
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                        Task {
+                            await self.balanceService.fetchBalance(for: self.appAddress)
+                        }
+                    }
+                    
+                case .failure(let error):
+                    self.fundingError = error.localizedDescription
+                    self.showFundingError = true
+                }
+            }
         }
     }
 }
