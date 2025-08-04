@@ -316,6 +316,27 @@ public class CommentsContractService: ObservableObject {
         }
     }
     
+    // MARK: - Gas Estimation
+    
+    /// Estimate gas for a transaction
+    private func estimateGas(for invocation: SolidityInvocation, from address: EthereumAddress) async throws -> EthereumQuantity {
+        return try await withCheckedThrowingContinuation { continuation in
+            invocation.estimateGas(from: address) { result, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else if let gasEstimate = result {
+                    // Add 20% buffer for safety
+                    let gasWithBuffer = gasEstimate.quantity * 120 / 100
+                    continuation.resume(returning: EthereumQuantity(quantity: gasWithBuffer))
+                } else {
+                    continuation.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to estimate gas"]))
+                }
+            }
+        }
+    }
+    
+    // MARK: - Approval Methods
+    
     public func checkApproval(authorAddress: String, appAddress: String) async {
         guard !authorAddress.isEmpty && !appAddress.isEmpty else { return }
         
@@ -372,6 +393,8 @@ public class CommentsContractService: ObservableObject {
             }
         }
     }
+    
+    // MARK: - Comment Methods
     
     public func postComment(
         params: CommentParams,
@@ -437,12 +460,17 @@ public class CommentsContractService: ObservableObject {
             authorSignature: Data(count: 32),
             appSignature: appSignature
         )
+        
+        // Estimate gas for the transaction
+        let estimatedGas = try await estimateGas(for: invocation, from: ethPrivateKey.address)
+        print("🔧 Estimated gas: \(estimatedGas)")
+        
         let transaction = invocation.createTransaction(
             nonce: nonce,
             gasPrice: gasPrice,
             maxFeePerGas: nil,
             maxPriorityFeePerGas: nil,
-            gasLimit: 200000,
+            gasLimit: estimatedGas,
             from: ethPrivateKey.address,
             value: 0,
             accessList: [:],
@@ -575,18 +603,24 @@ public class CommentsContractService: ObservableObject {
             }
         }
         
-        let transaction = contract.deleteCommentWithSig(
+        let invocation = contract.deleteCommentWithSig(
             commentId: commentIdData,
             app: appAddr,
             deadline: deadlineBigUInt,
             authorSignature: authorSignature,
             appSignature: appSignature
-        ).createTransaction(
+        )
+        
+        // Estimate gas for the transaction
+        let estimatedGas = try await estimateGas(for: invocation, from: ethPrivateKey.address)
+        print("🔧 Estimated gas for delete: \(estimatedGas)")
+        
+        let transaction = invocation.createTransaction(
             nonce: nonce,
             gasPrice: gasPrice,
             maxFeePerGas: nil,
             maxPriorityFeePerGas: nil,
-            gasLimit: 200000,
+            gasLimit: estimatedGas,
             from: ethPrivateKey.address,
             value: 0,
             accessList: [:],
@@ -662,15 +696,21 @@ public class CommentsContractService: ObservableObject {
             }
         }
         
-        let transaction = contract.addApproval(
+        let invocation = contract.addApproval(
             app: appAddr,
             expiry: expiryBigUInt
-        ).createTransaction(
+        )
+        
+        // Estimate gas for the transaction
+        let estimatedGas = try await estimateGas(for: invocation, from: ethPrivateKey.address)
+        print("🔧 Estimated gas for approval: \(estimatedGas)")
+        
+        let transaction = invocation.createTransaction(
             nonce: nonce,
             gasPrice: gasPrice,
             maxFeePerGas: nil,
             maxPriorityFeePerGas: nil,
-            gasLimit: 100000,
+            gasLimit: estimatedGas,
             from: ethPrivateKey.address,
             value: 0,
             accessList: [:],
