@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Web3
 
 // MARK: - Data Models
 struct CommentsResponse: Codable {
@@ -274,6 +275,7 @@ class CommentsService: ObservableObject {
 // MARK: - Views
 struct ContentView: View {
     @StateObject private var commentsService = CommentsService()
+    @StateObject private var identityService = IdentityService()
     @State private var showingComposeModal = false
     @State private var showingSettingsModal = false
     @State private var currentUserAddress: String?
@@ -378,7 +380,7 @@ struct ContentView: View {
             }
         }
         .overlay(
-            // Floating Action Button
+            // Floating Action Button - always visible
             VStack {
                 Spacer()
                 HStack {
@@ -402,18 +404,25 @@ struct ContentView: View {
             }
         )
         .sheet(isPresented: $showingComposeModal) {
-            ComposeCommentView(onCommentPosted: {
-                // Refresh the feed when comment is posted
-                Task {
-                    await commentsService.refreshComments()
+            ComposeCommentView(
+                identityService: identityService,
+                onCommentPosted: {
+                    // Refresh the feed when comment is posted
+                    Task {
+                        await commentsService.refreshComments()
+                    }
                 }
-            })
+            )
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingSettingsModal, onDismiss: {
             // Reload identity address when settings sheet closes
             loadCurrentUserAddress()
+            // Re-check identity configuration
+            Task {
+                await identityService.checkIdentityConfiguration()
+            }
         }) {
             SettingsView()
                 .presentationDetents([.large])
@@ -425,6 +434,10 @@ struct ContentView: View {
             }
             // Load current user's identity address
             loadCurrentUserAddress()
+            // Check identity configuration
+            Task {
+                await identityService.checkIdentityConfiguration()
+            }
         }
     }
     
@@ -437,6 +450,8 @@ struct ContentView: View {
             currentUserAddress = nil
         }
     }
+    
+
 }
 
 
