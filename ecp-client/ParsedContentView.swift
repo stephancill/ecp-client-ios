@@ -7,6 +7,12 @@
 
 import SwiftUI
 
+// MARK: - Parsed Content Result
+struct ParsedContentResult {
+    let textSegments: [ContentSegment]
+    let imageReferences: [Reference]
+}
+
 // MARK: - Parsed Content View
 struct ParsedContentView: View {
     let segments: [ContentSegment]
@@ -14,6 +20,35 @@ struct ParsedContentView: View {
     let maxLines: Int
     let maxHeight: CGFloat
     let onUserTap: ((String, String, String) -> Void)?
+    
+    // Computed property to separate text and image segments
+    private var parsedResult: ParsedContentResult {
+        let textSegments = segments.filter { segment in
+            switch segment {
+            case .image:
+                return false
+            default:
+                return true
+            }
+        }
+        
+        let imageReferences = segments.compactMap { segment in
+            switch segment {
+            case .image(let reference):
+                return reference
+            default:
+                return nil
+            }
+        }
+        
+        print("📸 ParsedContentView - Total segments: \(segments.count)")
+        print("📸 ParsedContentView - Image references found: \(imageReferences.count)")
+        for (index, imageRef) in imageReferences.enumerated() {
+            print("📸 Image \(index): \(imageRef.url ?? "no URL")")
+        }
+        
+        return ParsedContentResult(textSegments: textSegments, imageReferences: imageReferences)
+    }
     
     init(segments: [ContentSegment], isExpanded: Bool, maxLines: Int, maxHeight: CGFloat, onUserTap: ((String, String, String) -> Void)? = nil) {
         self.segments = segments
@@ -24,21 +59,51 @@ struct ParsedContentView: View {
     }
     
     var body: some View {
-        Text(.init(createMarkdownText()))
-            .font(.body)
-            .lineLimit(isExpanded ? nil : maxLines)
-            .frame(maxHeight: isExpanded ? nil : maxHeight, alignment: .top)
-            .clipped()
-            .environment(\.openURL, OpenURLAction { url in
-                handleURLTap(url)
-                return .handled
-            })
+        VStack(alignment: .leading, spacing: 12) {
+            // Text content
+            Text(.init(createMarkdownText()))
+                .font(.body)
+                .lineLimit(isExpanded ? nil : maxLines)
+                .frame(maxHeight: isExpanded ? nil : maxHeight, alignment: .top)
+                .clipped()
+                .environment(\.openURL, OpenURLAction { url in
+                    handleURLTap(url)
+                    return .handled
+                })
+            
+            // Images below text content
+            if !parsedResult.imageReferences.isEmpty {
+                ForEach(parsedResult.imageReferences.indices, id: \.self) { index in
+                    let imageReference = parsedResult.imageReferences[index]
+                    if let urlString = imageReference.url, let url = URL(string: urlString) {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 200, height: 200)
+                                .clipped()  
+                                .cornerRadius(12)
+                        } placeholder: {
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.2))
+                                .frame(width: 200, height: 200)
+                                .cornerRadius(12)
+                                .overlay(
+                                    Image(systemName: "photo")
+                                        .foregroundColor(.gray)
+                                        .font(.title2)
+                                )
+                        }
+                    }
+                }
+            }
+        }
     }
     
     private func createMarkdownText() -> String {
         var result = ""
         
-        for segment in segments {
+        for segment in parsedResult.textSegments {
             switch segment {
             case .text(let content):
                 result += content
@@ -69,6 +134,10 @@ struct ParsedContentView: View {
                 } else {
                     result += "@\(displayText)"
                 }
+                
+            case .image:
+                // Images are handled separately in the view, this case should not occur in textSegments
+                break
             }
         }
         
