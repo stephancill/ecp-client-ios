@@ -182,6 +182,8 @@ class CommentsService: ObservableObject {
     }
     
     func fetchComments(refresh: Bool = false) {
+        let isRefreshRequest = refresh
+        
         if refresh {
             isRefreshing = true
             endCursor = nil
@@ -224,7 +226,7 @@ class CommentsService: ObservableObject {
                     // Filter out deleted comments
                     let filteredResults = commentsResponse.results.filter { $0.deletedAt == nil }
                     
-                    if self?.isRefreshing == true || self?.comments.isEmpty == true {
+                    if isRefreshRequest || self?.comments.isEmpty == true {
                         self?.comments = filteredResults
                     } else {
                         // Append new comments, avoiding duplicates and deleted comments
@@ -251,7 +253,7 @@ class CommentsService: ObservableObject {
             url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
             
         case .replies(let parentId):
-            let baseURL = "https://api.ethcomments.xyz/api/comments/\(parentId)/replies?chainId=8453&limit=20"
+            let baseURL = "https://api.ethcomments.xyz/api/comments/\(parentId)/replies?chainId=8453&moderationStatus=approved&moderationStatus=pending&limit=20"
             url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
             
         case .userComments(let address):
@@ -309,6 +311,7 @@ struct ContentView: View {
                             CommentSkeletonView()
                                 .listRowInsets(EdgeInsets())
                                 .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
                         }
                     }
                     .listStyle(.plain)
@@ -326,6 +329,7 @@ struct ContentView: View {
                             )
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                             .onAppear {
                                 // Load more when approaching the end
                                 if comment.id == commentsService.comments.last?.id {
@@ -382,6 +386,7 @@ struct ContentView: View {
                 }
             }
         }
+        .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
         .overlay(
             // Floating Action Button - always visible
             VStack {
@@ -409,6 +414,7 @@ struct ContentView: View {
         .sheet(isPresented: $showingComposeModal) {
             ComposeCommentView(
                 identityService: identityService,
+                parentComment: nil,
                 onCommentPosted: {
                     // Refresh the feed when comment is posted
                     Task {
