@@ -18,7 +18,14 @@ struct ComposeCommentView: View {
     @StateObject private var pollingService = CommentPollingService()
     
     let identityService: IdentityService
+    let parentComment: Comment?
     var onCommentPosted: (() -> Void)?
+    
+    init(identityService: IdentityService, parentComment: Comment? = nil, onCommentPosted: (() -> Void)? = nil) {
+        self.identityService = identityService
+        self.parentComment = parentComment
+        self.onCommentPosted = onCommentPosted
+    }
     
     var body: some View {
         NavigationView {
@@ -75,6 +82,67 @@ struct ComposeCommentView: View {
                     .padding(20)
                 } else {
                     // Identity configured - show normal compose interface
+                    
+                    // Reply context (if replying to a comment)
+                    if let parentComment = parentComment {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "arrowshape.turn.up.left")
+                                    .foregroundColor(.secondary)
+                                    .font(.caption)
+                                Text("Replying to")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                            }
+                            
+                            HStack(alignment: .top, spacing: 8) {
+                                // Parent comment avatar
+                                if let farcaster = parentComment.author.farcaster {
+                                    AsyncImage(url: URL(string: farcaster.pfpUrl ?? "")) { image in
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                    } placeholder: {
+                                        BlockiesAvatarView(address: parentComment.author.address, size: 24)
+                                    }
+                                    .frame(width: 24, height: 24)
+                                    .clipShape(Circle())
+                                } else {
+                                    BlockiesAvatarView(address: parentComment.author.address, size: 24)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    // Author name
+                                    if let farcaster = parentComment.author.farcaster {
+                                        Text("@\(farcaster.username)")
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                    } else if let ens = parentComment.author.ens {
+                                        Text(ens.name)
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                    } else {
+                                        Text(Utils.truncateAddress(parentComment.author.address))
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                    }
+                                    
+                                    // Parent comment content (truncated)
+                                    Text(parentComment.content)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(2)
+                                }
+                                
+                                Spacer()
+                            }
+                        }
+                        .padding(12)
+                        .background(Color(UIColor.secondarySystemGroupedBackground))
+                        .cornerRadius(8)
+                    }
+                    
                     // Text Editor with Avatar
                     HStack(alignment: .top, spacing: 12) {
                         // Placeholder Avatar
@@ -93,7 +161,7 @@ struct ComposeCommentView: View {
                                 .frame(minHeight: 80)
                             
                             if commentText.isEmpty {
-                                Text("What's your take?")
+                                Text(parentComment != nil ? "Write your reply..." : "What's your take?")
                                     .foregroundColor(.secondary)
                                     .font(.body)
                                     .padding(.top, 8)
@@ -154,7 +222,7 @@ struct ComposeCommentView: View {
                 Spacer()
             }
             .padding(20)
-            .navigationTitle("New Comment")
+            .navigationTitle(parentComment != nil ? "Reply" : "New Comment")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -213,12 +281,14 @@ extension ComposeCommentView {
                 let appAddress = ethereumPrivateKey.address.hex(eip55: true)
                 
                 // Create comment parameters once to ensure consistency between getCommentId and postComment
+                let parentId: Data? = parentComment != nil ? Data(hex: parentComment!.id) : nil
                 let commentParams = CommentParams(
                     identityAddress: identityAddress,
                     appAddress: appAddress,
                     channelId: 0,
                     content: commentText,
-                    targetUri: ""
+                    targetUri: "",
+                    parentId: parentId
                 )
                 
                 // First, get the comment ID using the same parameters
@@ -293,5 +363,5 @@ extension ComposeCommentView {
 
 
 #Preview {
-    ComposeCommentView(identityService: IdentityService())
+    ComposeCommentView(identityService: IdentityService(), parentComment: nil)
 } 

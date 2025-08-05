@@ -11,9 +11,11 @@ import SwiftUI
 struct RepliesView: View {
     let parentComment: Comment
     @StateObject private var repliesService: CommentsService
+    @StateObject private var identityService = IdentityService()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @State private var currentUserAddress: String?
+    @State private var showingComposeModal = false
     
     init(parentComment: Comment) {
         self.parentComment = parentComment
@@ -30,6 +32,7 @@ struct RepliesView: View {
                             CommentSkeletonView()
                                 .listRowInsets(EdgeInsets())
                                 .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
                         }
                     }
                     .listStyle(.plain)
@@ -56,17 +59,15 @@ struct RepliesView: View {
                             .font(.largeTitle)
                         Text("No replies yet")
                             .font(.headline)
-                        Text("Be the first to reply!")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.clear)
                 } else {
                     List {
                         // Replies using the same styling as main comments
                         ForEach(repliesService.comments) { reply in
                             CommentRowView(
                                 comment: reply, 
-                                showRepliesButton: false, 
                                 currentUserAddress: currentUserAddress,
                                 onCommentDeleted: {
                                     // Refresh the replies list after deletion
@@ -75,6 +76,7 @@ struct RepliesView: View {
                             )
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                             .onAppear {
                                 // Load more when approaching the end
                                 if reply.id == repliesService.comments.last?.id {
@@ -105,7 +107,43 @@ struct RepliesView: View {
             }
             .navigationTitle("Replies")
             .navigationBarTitleDisplayMode(.inline)
-            .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
+            .background(Color.clear)
+        }
+        .overlay(
+            // Floating Action Button for replying
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.impactOccurred()
+                        showingComposeModal = true
+                    }) {
+                        Image(systemName: "arrowshape.turn.up.left.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 56, height: 56)
+                            .background(Color.blue)
+                            .clipShape(Circle())
+                            .shadow(radius: 4, x: 0, y: 2)
+                    }
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 20)
+                }
+            }
+        )
+        .sheet(isPresented: $showingComposeModal) {
+            ComposeCommentView(
+                identityService: identityService,
+                parentComment: parentComment,
+                onCommentPosted: {
+                    // Refresh the replies when comment is posted
+                    repliesService.fetchComments(refresh: true)
+                }
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .onAppear {
             if repliesService.comments.isEmpty {
@@ -113,6 +151,10 @@ struct RepliesView: View {
             }
             // Load current user's identity address
             loadCurrentUserAddress()
+            // Check identity configuration
+            Task {
+                await identityService.checkIdentityConfiguration()
+            }
         }
     }
     

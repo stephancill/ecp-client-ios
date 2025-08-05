@@ -103,7 +103,7 @@ struct CommentSkeletonView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
-        .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
+        .background(Color.clear)
         .onAppear {
             withAnimation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
                 isAnimating = true

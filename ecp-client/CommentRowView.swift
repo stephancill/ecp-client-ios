@@ -11,7 +11,6 @@ import Web3
 // MARK: - Comment Row View
 struct CommentRowView: View {
     let comment: Comment
-    let showRepliesButton: Bool
     let currentUserAddress: String?
     @State private var isExpanded = false
     @State private var showingRepliesSheet = false
@@ -25,9 +24,8 @@ struct CommentRowView: View {
     // Callback for when comment is deleted
     var onCommentDeleted: (() -> Void)?
     
-    init(comment: Comment, showRepliesButton: Bool = true, currentUserAddress: String? = nil, onCommentDeleted: (() -> Void)? = nil) {
+    init(comment: Comment, currentUserAddress: String? = nil, onCommentDeleted: (() -> Void)? = nil) {
         self.comment = comment
-        self.showRepliesButton = showRepliesButton
         self.currentUserAddress = currentUserAddress
         self.onCommentDeleted = onCommentDeleted
     }
@@ -214,22 +212,23 @@ struct CommentRowView: View {
                 
                 Spacer()
                 
-                if showRepliesButton, let replies = comment.replies, !replies.results.isEmpty {
-                    Button(action: {
-                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                        impactFeedback.impactOccurred()
-                        showingRepliesSheet = true
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrowshape.turn.up.left")
-                                .font(.caption)
+                // Always show reply button
+                Button(action: {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
+                    showingRepliesSheet = true
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrowshape.turn.up.left")
+                            .font(.caption)
+                        if let replies = comment.replies, !replies.results.isEmpty {
                             Text("\(replies.results.count)")
                                 .font(.caption)
                         }
-                        .foregroundColor(.blue)
                     }
-                    .buttonStyle(.plain)
+                    .foregroundColor(.blue)
                 }
+                .buttonStyle(.plain)
             }
             
             // Subtle divider
@@ -240,7 +239,7 @@ struct CommentRowView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
-        .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
+        .background(Color.clear)
         .disabled(isDeleting)
         .sheet(isPresented: $showingRepliesSheet) {
             RepliesView(parentComment: comment)
