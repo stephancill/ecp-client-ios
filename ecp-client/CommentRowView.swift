@@ -119,7 +119,7 @@ struct CommentRowView: View {
                             }
                         }
                         
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 0) {
                             Text(displayUsername)
                                 .font(.headline)
                                 .fontWeight(.semibold)
