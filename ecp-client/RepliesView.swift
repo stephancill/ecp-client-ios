@@ -11,6 +11,7 @@ import SwiftUI
 struct RepliesView: View {
     let parentComment: Comment
     @StateObject private var repliesService: CommentsService
+    @StateObject private var channelsService = ChannelsService()
     @StateObject private var identityService = IdentityService()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
@@ -69,6 +70,7 @@ struct RepliesView: View {
                             CommentRowView(
                                 comment: reply, 
                                 currentUserAddress: currentUserAddress,
+                                channelsService: channelsService,
                                 onCommentDeleted: {
                                     // Refresh the replies list after deletion
                                     repliesService.fetchComments(refresh: true)
@@ -148,6 +150,10 @@ struct RepliesView: View {
         .onAppear {
             if repliesService.comments.isEmpty {
                 repliesService.fetchComments(refresh: true)
+            }
+            // Load channels for channel display
+            if channelsService.channels.isEmpty {
+                channelsService.fetchChannels(refresh: true)
             }
             // Load current user's identity address
             loadCurrentUserAddress()

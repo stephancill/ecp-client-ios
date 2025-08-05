@@ -23,6 +23,7 @@ struct UserDetailView: View {
     let address: String
     
     @StateObject private var commentsService: CommentsService
+    @StateObject private var channelsService = ChannelsService()
     @Environment(\.colorScheme) private var colorScheme
     @State private var scrollOffset: CGFloat = 0
     @State private var showHeaderAvatar: Bool = false
@@ -115,6 +116,10 @@ struct UserDetailView: View {
         .onAppear {
             // Fetch comments when view appears
             commentsService.fetchComments(refresh: true)
+            // Load channels for channel display
+            if channelsService.channels.isEmpty {
+                channelsService.fetchChannels(refresh: true)
+            }
             // Load current user's identity address
             loadCurrentUserAddress()
         }
@@ -253,6 +258,7 @@ struct UserDetailView: View {
                 CommentRowView(
                     comment: comment, 
                     currentUserAddress: currentUserAddress,
+                    channelsService: channelsService,
                     onCommentDeleted: {
                         // Refresh the comments list after deletion
                         commentsService.fetchComments(refresh: true)
