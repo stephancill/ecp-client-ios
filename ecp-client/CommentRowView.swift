@@ -212,8 +212,9 @@ struct CommentRowView: View {
                             ReferenceChip(reference: reference)
                         }
                     }
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, 16)
                 }
+                .padding(.horizontal, -16) // Negative padding to extend to full screen width
             }
             
             // Reactions and replies
