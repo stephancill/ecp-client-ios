@@ -12,21 +12,24 @@ import Web3
 struct CommentRowView: View {
     let comment: Comment
     let currentUserAddress: String?
+    let channelsService: ChannelsService?
     @State private var isExpanded = false
     @State private var showingRepliesSheet = false
     @State private var showingUserDetailSheet = false
     @State private var showingDeleteConfirmation = false
     @State private var isDeleting = false
     @State private var deleteError: String?
+    @State private var channelInfo: Channel?
     @StateObject private var commentsService = CommentsContractService()
     @Environment(\.colorScheme) private var colorScheme
     
     // Callback for when comment is deleted
     var onCommentDeleted: (() -> Void)?
     
-    init(comment: Comment, currentUserAddress: String? = nil, onCommentDeleted: (() -> Void)? = nil) {
+    init(comment: Comment, currentUserAddress: String? = nil, channelsService: ChannelsService? = nil, onCommentDeleted: (() -> Void)? = nil) {
         self.comment = comment
         self.currentUserAddress = currentUserAddress
+        self.channelsService = channelsService
         self.onCommentDeleted = onCommentDeleted
     }
     
@@ -121,9 +124,28 @@ struct CommentRowView: View {
                                 .font(.headline)
                                 .fontWeight(.semibold)
                             
-                            Text(comment.formattedDate)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                            HStack(spacing: 6) {
+                                Text(comment.formattedDate)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                
+                                // Channel chip (if available and not Home channel)
+                                if let channelInfo = channelInfo, channelInfo.id != "0" {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "number")
+                                            .font(.caption2)
+                                        
+                                        Text(channelInfo.name)
+                                            .font(.caption2)
+                                            .lineLimit(1)
+                                    }
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.blue.opacity(0.1))
+                                    .foregroundColor(.blue)
+                                    .cornerRadius(6)
+                                }
+                            }
                         }
                     }
                 }
@@ -241,6 +263,10 @@ struct CommentRowView: View {
         .padding(.horizontal, 16)
         .background(Color.clear)
         .disabled(isDeleting)
+        .onAppear {
+            // Load channel information if channelsService is available
+            loadChannelInfo()
+        }
         .sheet(isPresented: $showingRepliesSheet) {
             RepliesView(parentComment: comment)
                 .presentationDetents([.medium, .large])
@@ -400,5 +426,26 @@ struct CommentRowView: View {
     
     private func truncateAddress(_ address: String) -> String {
         return Utils.truncateAddress(address)
+    }
+    
+    // MARK: - Channel Loading
+    private func loadChannelInfo() {
+        // Skip loading for Home channel (id: "0")
+        guard comment.channelId != "0", let channelsService = channelsService else {
+            return
+        }
+        
+        // Check cache first
+        if let cachedChannel = channelsService.getCachedChannel(id: comment.channelId) {
+            channelInfo = cachedChannel
+            return
+        }
+        
+        // Fetch from API
+        channelsService.fetchChannel(id: comment.channelId) { channel in
+            DispatchQueue.main.async {
+                channelInfo = channel
+            }
+        }
     }
 } 
