@@ -15,6 +15,7 @@ enum ContentSegment: Identifiable {
     case url(String)
     case farcasterMention(String, reference: Reference?)
     case ensMention(String, reference: Reference?)
+    case image(reference: Reference)
     
     var id: String {
         switch self {
@@ -30,6 +31,8 @@ enum ContentSegment: Identifiable {
             return "farcaster_\(username)"
         case .ensMention(let ensName, _):
             return "ens_\(ensName)"
+        case .image(let reference):
+            return "image_\(reference.url ?? UUID().uuidString)"
         }
     }
 }
@@ -38,6 +41,9 @@ enum ContentSegment: Identifiable {
 struct ContentParser {
     static func parseContent(_ content: String, references: [Reference]) -> [ContentSegment] {
         var segments: [ContentSegment] = []
+        
+        // Extract image references completely separately from text processing
+        let imageReferences = references.filter { $0.type == "image" }
         
         // First, remove trailing references from content
         let trimmedContent = removeTrailingReferences(content, references: references)
@@ -82,6 +88,11 @@ struct ContentParser {
                     allMatches.append((range: range, type: "ens", reference: ensRef))
                 }
             }
+        }
+        
+        // Add image references directly - no need to find them in text
+        for imageRef in imageReferences {
+            segments.append(.image(reference: imageRef))
         }
         
         // Find Ethereum addresses (but exclude those that are part of EIP155 patterns)

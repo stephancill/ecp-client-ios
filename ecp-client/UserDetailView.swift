@@ -285,15 +285,6 @@ struct UserDetailView: View {
                 Spacer()
             }
             .padding(.vertical, 8)
-        } else if !commentsService.canLoadMore && !commentsService.comments.isEmpty {
-            HStack {
-                Spacer()
-                Text("No more comments")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Spacer()
-            }
-            .padding(.vertical, 8)
         }
     }
     
@@ -353,8 +344,8 @@ private func truncateAddress(_ address: String) -> String {
 
 #Preview {
     UserDetailView(
-        avatar: "https://example.com/avatar.jpg",
-        username: "example.eth",
-        address: "0x1234567890123456789012345678901234567890"
+        avatar: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/e738382d-7e8c-41f1-9d6d-dedf55df2f00/original",
+        username: "df",
+        address: "0xdaa83039aca9a33b2e54bb2acc9f9c3a99357618"
     )
 } 

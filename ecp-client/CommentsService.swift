@@ -83,6 +83,8 @@ struct Reference: Codable {
     let pfpUrl: String?
     // ENS-specific fields
     let avatarUrl: String?
+    // Image-specific fields
+    let mediaType: String?
 }
 
 struct Chain: Codable {

@@ -59,14 +59,14 @@ struct CommentRowView: View {
         return comment.author.address.lowercased() == currentUserAddress.lowercased()
     }
     
-    // Computed property for deduplicated references (excluding farcaster mentions which are shown inline)
+    // Computed property for deduplicated references (excluding farcaster mentions, ENS, and images which are shown inline)
     private var deduplicatedReferences: [Reference] {
         var uniqueReferences: [Reference] = []
         var seenIdentifiers: Set<String> = []
         
         for reference in comment.references {
-            // Skip farcaster and ENS references as they're now shown inline
-            if reference.type == "farcaster" || reference.type == "ens" {
+            // Skip farcaster, ENS, and image references as they're now shown inline
+            if reference.type == "farcaster" || reference.type == "ens" || reference.type == "image" {
                 continue
             }
             
@@ -417,6 +417,10 @@ struct CommentRowView: View {
                 let displayName = reference.displayName ?? ""
                 return "farcaster_display_\(displayName)"
             }
+            
+        case "image":
+            // For images, use the URL
+            return "image_\(reference.url ?? "")"
             
         default:
             // For other types, create a general identifier
