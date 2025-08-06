@@ -252,15 +252,15 @@ class CommentsService: ObservableObject {
         let url: String
         switch serviceType {
         case .mainComments:
-            let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&moderationStatus=approved&moderationStatus=pending&limit=20&sort=desc&mode=nested"
+            let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&moderationStatus=approved&moderationStatus=pending&limit=20&sort=desc&mode=nested&commentType=0"
             url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
             
         case .replies(let parentId):
-            let baseURL = "https://api.ethcomments.xyz/api/comments/\(parentId)/replies?chainId=8453&moderationStatus=approved&moderationStatus=pending&limit=20"
+            let baseURL = "https://api.ethcomments.xyz/api/comments/\(parentId)/replies?chainId=8453&moderationStatus=approved&moderationStatus=pending&limit=20&commentType=0"
             url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
             
         case .userComments(let address):
-            let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&moderationStatus=approved&moderationStatus=pending&limit=20&sort=desc&mode=nested&author=\(address)"
+            let baseURL = "https://api.ethcomments.xyz/api/comments?chainId=8453&moderationStatus=approved&moderationStatus=pending&limit=20&sort=desc&mode=nested&author=\(address)&commentType=0"
             url = endCursor != nil ? "\(baseURL)&cursor=\(endCursor!)" : baseURL
         }
         return url
