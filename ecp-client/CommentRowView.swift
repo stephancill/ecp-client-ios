@@ -223,7 +223,9 @@ struct CommentRowView: View {
                 if !comment.reactionCounts.isEmpty {
                     ForEach(comment.reactionCounts.sorted(by: { $0.key < $1.key }), id: \.key) { key, value in
                         HStack(spacing: 4) {
-                            Text(key == "like" ? "❤️" : key)
+                            Image(systemName: reactionIcon(for: key))
+                                .font(.caption)
+                                .foregroundColor(reactionColor(for: key))
                             Text("\(value)")
                         }
                         .font(.caption)
@@ -452,6 +454,31 @@ struct CommentRowView: View {
             DispatchQueue.main.async {
                 channelInfo = channel
             }
+        }
+    }
+    
+    // MARK: - Reaction Helpers
+    private func reactionIcon(for key: String) -> String {
+        switch key.lowercased() {
+        case "like":
+            return "heart"
+        case "repost":
+            return "arrow.2.squarepath"
+        case "upvote":
+            return "arrow.up"
+        case "downvote":
+            return "arrow.down"
+        default:
+            return "hand.raised"
+        }
+    }
+    
+    private func reactionColor(for key: String) -> Color {
+        switch key.lowercased() {
+        case "like":
+            return .red
+        default:
+            return .gray
         }
     }
 } 
