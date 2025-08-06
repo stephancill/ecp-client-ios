@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Web3
+import CachedAsyncImage
 
 // MARK: - Comment Row View
 struct CommentRowView: View {
@@ -93,7 +94,7 @@ struct CommentRowView: View {
                         Group {
                             if let imageUrl = comment.author.ens?.avatarUrl ?? comment.author.farcaster?.pfpUrl,
                                !imageUrl.isEmpty {
-                                AsyncImage(url: URL(string: imageUrl)) { phase in
+                                CachedAsyncImage(url: URL(string: imageUrl)) { phase in
                                     switch phase {
                                     case .success(let image):
                                         image

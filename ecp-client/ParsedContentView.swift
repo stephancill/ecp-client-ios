@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CachedAsyncImage
 
 // MARK: - Parsed Content Result
 struct ParsedContentResult {
@@ -20,6 +21,8 @@ struct ParsedContentView: View {
     let maxLines: Int
     let maxHeight: CGFloat
     let onUserTap: ((String, String, String) -> Void)?
+    @State private var showingImageModal = false
+    @State private var selectedImageURL: URL?
     
     // Computed property to separate text and image segments
     private var parsedResult: ParsedContentResult {
@@ -76,7 +79,7 @@ struct ParsedContentView: View {
                 ForEach(parsedResult.imageReferences.indices, id: \.self) { index in
                     let imageReference = parsedResult.imageReferences[index]
                     if let urlString = imageReference.url, let url = URL(string: urlString) {
-                        AsyncImage(url: url) { image in
+                        CachedAsyncImage(url: url) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
