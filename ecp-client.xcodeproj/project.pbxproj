@@ -27,13 +27,15 @@
 		D4C7B2CC2E3E9DD8002B087F /* ReferenceChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */; };
 		D4C7B2CD2E3E9DD8002B087F /* RepliesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C72E3E9DD8002B087F /* RepliesView.swift */; };
 		D4C7B2CF2E3E9DD8002B087F /* CommentRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2C92E3E9DD8002B087F /* CommentRowView.swift */; };
-		D4C7B2D02E3E9DD8002B087F /* ParsedContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */; };
 		D4C7B2D32E3EACF7002B087F /* Web3 in Frameworks */ = {isa = PBXBuildFile; productRef = D4C7B2D22E3EACF7002B087F /* Web3 */; };
 		D4C7B2D52E3EACF7002B087F /* Web3ContractABI in Frameworks */ = {isa = PBXBuildFile; productRef = D4C7B2D42E3EACF7002B087F /* Web3ContractABI */; };
 		D4C7B2D72E3EACF7002B087F /* Web3PromiseKit in Frameworks */ = {isa = PBXBuildFile; productRef = D4C7B2D62E3EACF7002B087F /* Web3PromiseKit */; };
 		D4C7B2D92E3EAFD9002B087F /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */; };
+		D4F3888D2E437A5C0019E0C0 /* ParsedContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3888C2E437A5C0019E0C0 /* ParsedContentView.swift */; };
 		D4FF6E4D2E4237C100A51874 /* CommentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4C2E4237C000A51874 /* CommentsService.swift */; };
 		D4FF6E4F2E4238C800A51874 /* ChannelsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */; };
+		D4FF6E512E424FC300A51874 /* ImageViewerModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */; };
+		D4FF6E562E43749F00A51874 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = D4FF6E552E43749F00A51874 /* CachedAsyncImage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -58,10 +60,11 @@
 		D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferenceChip.swift; sourceTree = "<group>"; };
 		D4C7B2C72E3E9DD8002B087F /* RepliesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RepliesView.swift; sourceTree = "<group>"; };
 		D4C7B2C92E3E9DD8002B087F /* CommentRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentRowView.swift; sourceTree = "<group>"; };
-		D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ParsedContentView.swift; sourceTree = "<group>"; };
 		D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
+		D4F3888C2E437A5C0019E0C0 /* ParsedContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsedContentView.swift; sourceTree = "<group>"; };
 		D4FF6E4C2E4237C000A51874 /* CommentsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsService.swift; sourceTree = "<group>"; };
 		D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelsService.swift; sourceTree = "<group>"; };
+		D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewerModal.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +73,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D4BEED9C2E3FCDAF00A45974 /* CoinbaseWalletSDK in Frameworks */,
+				D4FF6E562E43749F00A51874 /* CachedAsyncImage in Frameworks */,
 				D4C7B2D52E3EACF7002B087F /* Web3ContractABI in Frameworks */,
 				D4C7B2D72E3EACF7002B087F /* Web3PromiseKit in Frameworks */,
 				D4C7B2D32E3EACF7002B087F /* Web3 in Frameworks */,
@@ -105,13 +109,14 @@
 				D4C7B2B82E3E2C62002B087F /* ComposeCommentView.swift */,
 				D4C7B2C92E3E9DD8002B087F /* CommentRowView.swift */,
 				D4C7B2C52E3E9DD8002B087F /* CommentSkeletonView.swift */,
-				D4C7B2CA2E3E9DD8002B087F /* ParsedContentView.swift */,
 				D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */,
 				D4BEED962E3F907100A45974 /* CommentManager.swift */,
+				D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */,
 				D4542E332E40AA46007F1A6C /* IdentityService.swift */,
 				D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */,
 				D4BEED9E2E3FD11100A45974 /* WalletConfigurationService.swift */,
 				D4BEED982E3FB10400A45974 /* CommentPollingService.swift */,
+				D4F3888C2E437A5C0019E0C0 /* ParsedContentView.swift */,
 				D4FF6E4C2E4237C000A51874 /* CommentsService.swift */,
 				D4C7B2C62E3E9DD8002B087F /* ReferenceChip.swift */,
 				D4BEED902E3EB3EB00A45974 /* SettingsView.swift */,
@@ -155,6 +160,7 @@
 				D4C7B2D42E3EACF7002B087F /* Web3ContractABI */,
 				D4C7B2D62E3EACF7002B087F /* Web3PromiseKit */,
 				D4BEED9B2E3FCDAF00A45974 /* CoinbaseWalletSDK */,
+				D4FF6E552E43749F00A51874 /* CachedAsyncImage */,
 			);
 			productName = "ecp-client";
 			productReference = D4C7B2A42E3E205A002B087F /* ecp-client.app */;
@@ -187,6 +193,7 @@
 			packageReferences = (
 				D4C7B2D12E3EACF7002B087F /* XCRemoteSwiftPackageReference "Web3.swift" */,
 				D4BEED9A2E3FCDAF00A45974 /* XCRemoteSwiftPackageReference "wallet-mobile-sdk" */,
+				D4FF6E542E43749F00A51874 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */,
 			);
 			productRefGroup = D4C7B2A52E3E205A002B087F /* Products */;
 			projectDirPath = "";
@@ -217,6 +224,7 @@
 				D4C7B2D92E3EAFD9002B087F /* KeychainManager.swift in Sources */,
 				D4C7B2CF2E3E9DD8002B087F /* CommentRowView.swift in Sources */,
 				D4C7B2AA2E3E205A002B087F /* ContentView.swift in Sources */,
+				D4F3888D2E437A5C0019E0C0 /* ParsedContentView.swift in Sources */,
 				D4BEED992E3FB10400A45974 /* CommentPollingService.swift in Sources */,
 				D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */,
 				D4C7B2CB2E3E9DD8002B087F /* CommentSkeletonView.swift in Sources */,
@@ -228,13 +236,13 @@
 				D4FF6E4D2E4237C100A51874 /* CommentsService.swift in Sources */,
 				D4C7B2BE2E3E3BA6002B087F /* Blockies.swift in Sources */,
 				D4C7B2C22E3E9DB5002B087F /* BlockiesAvatarView.swift in Sources */,
-				D4C7B2D02E3E9DD8002B087F /* ParsedContentView.swift in Sources */,
 				D4C7B2C02E3E67D9002B087F /* UserDetailView.swift in Sources */,
 				D4FF6E4F2E4238C800A51874 /* ChannelsService.swift in Sources */,
 				D4BEED972E3F907100A45974 /* CommentManager.swift in Sources */,
 				D4C7B2C42E3E9DBB002B087F /* ContentParser.swift in Sources */,
 				D4C7B2B92E3E2C62002B087F /* ComposeCommentView.swift in Sources */,
 				D4542E342E40AA47007F1A6C /* IdentityService.swift in Sources */,
+				D4FF6E512E424FC300A51874 /* ImageViewerModal.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -464,6 +472,14 @@
 				minimumVersion = 0.8.8;
 			};
 		};
+		D4FF6E542E43749F00A51874 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/lorenzofiamingo/swiftui-cached-async-image";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -486,6 +502,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D4C7B2D12E3EACF7002B087F /* XCRemoteSwiftPackageReference "Web3.swift" */;
 			productName = Web3PromiseKit;
+		};
+		D4FF6E552E43749F00A51874 /* CachedAsyncImage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D4FF6E542E43749F00A51874 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */;
+			productName = CachedAsyncImage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

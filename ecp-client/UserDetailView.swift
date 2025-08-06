@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UIKit
+import CachedAsyncImage
 
 // MARK: - Scroll Offset Preference Key
 struct ScrollOffsetPreferenceKey: PreferenceKey {
@@ -40,7 +41,7 @@ struct UserDetailView: View {
     private var avatarView: some View {
         Group {
             if let avatarUrl = avatar, !avatarUrl.isEmpty {
-                AsyncImage(url: URL(string: avatarUrl)) { phase in
+                CachedAsyncImage(url: URL(string: avatarUrl)) { phase in
                     switch phase {
                     case .success(let image):
                         image
@@ -87,7 +88,7 @@ struct UserDetailView: View {
     private var headerAvatarView: some View {
         Group {
             if let avatarUrl = avatar, !avatarUrl.isEmpty {
-                AsyncImage(url: URL(string: avatarUrl)) { phase in
+                CachedAsyncImage(url: URL(string: avatarUrl)) { phase in
                     switch phase {
                     case .success(let image):
                         image

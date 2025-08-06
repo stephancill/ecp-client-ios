@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Web3
+import CachedAsyncImage
 
 struct ComposeCommentView: View {
     @Environment(\.dismiss) private var dismiss
@@ -99,7 +100,7 @@ struct ComposeCommentView: View {
                             HStack(alignment: .top, spacing: 8) {
                                 // Parent comment avatar
                                 if let farcaster = parentComment.author.farcaster {
-                                    AsyncImage(url: URL(string: farcaster.pfpUrl ?? "")) { image in
+                                    CachedAsyncImage(url: URL(string: farcaster.pfpUrl ?? "")) { image in
                                         image
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
