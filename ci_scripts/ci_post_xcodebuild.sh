@@ -14,17 +14,7 @@ if [[ -d "$CI_APP_STORE_SIGNED_APP_PATH" ]]; then
   git fetch --deepen 5
   
   # Create the main content with recent commits
-  echo "## Recent Changes" > $TESTFLIGHT_DIR_PATH/WhatToTest.en-US.txt
-  echo "" >> $TESTFLIGHT_DIR_PATH/WhatToTest.en-US.txt
   git log -5 --pretty=format:"• %s" >> $TESTFLIGHT_DIR_PATH/WhatToTest.en-US.txt
-  echo "" >> $TESTFLIGHT_DIR_PATH/WhatToTest.en-US.txt
-  echo "" >> $TESTFLIGHT_DIR_PATH/WhatToTest.en-US.txt
-  
-  # Add build info
-  echo "## Build Information" >> $TESTFLIGHT_DIR_PATH/WhatToTest.en-US.txt
-  echo "Built on: $(date '+%Y-%m-%d %H:%M:%S UTC')" >> $TESTFLIGHT_DIR_PATH/WhatToTest.en-US.txt
-  echo "Branch: $(git branch --show-current 2>/dev/null || echo 'Unknown')" >> $TESTFLIGHT_DIR_PATH/WhatToTest.en-US.txt
-  echo "Commit: $(git rev-parse --short HEAD 2>/dev/null || echo 'Unknown')" >> $TESTFLIGHT_DIR_PATH/WhatToTest.en-US.txt
   
   echo "TestFlight notes generated successfully!"
   echo "Content preview:"
