@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -15,11 +9,12 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  notifications NotificationDetails[]
-  approvals     Approval[]
+  id                 String                @id @default(cuid())
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  approvals          Approval[]
+  notificationEvents NotificationEvent[]
+  notifications      NotificationDetails[]
 
   @@map("users")
 }
@@ -27,33 +22,66 @@ model User {
 model NotificationDetails {
   id          String   @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deviceToken String   // APNs device token
+  deviceToken String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("notifications")
+  @@unique([userId, deviceToken])
   @@index([userId])
-  @@unique([userId, deviceToken]) // Prevent duplicate device tokens per user
+  @@map("notifications")
 }
 
 model Approval {
-  id          String    @id // Using the composite ID from API: author-app-chainId
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  author      String    // Ethereum address of the approver
-  app         String    // App address (will be the userId)
-  chainId     Int       // Chain ID
-  txHash      String    // Transaction hash
-  logIndex    Int       // Log index from the transaction
-  deletedAt   DateTime? // Soft delete timestamp
-  
-  // Relationship to User (app is the userId)
-  user        User      @relation(fields: [app], references: [id], onDelete: Cascade)
+  id        String    @id
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  author    String
+  app       String
+  chainId   Int
+  txHash    String
+  logIndex  Int
+  deletedAt DateTime?
+  user      User      @relation(fields: [app], references: [id], onDelete: Cascade)
 
-  @@map("approvals")
+  @@unique([author, app, chainId], name: "author_app_chainId")
   @@index([app])
   @@index([author])
   @@index([chainId])
-  @@unique([author, app, chainId]) // Prevent duplicate approvals per author-app-chainId combination
+  @@map("approvals")
+}
+
+model NotificationEvent {
+  id               String           @id @default(cuid())
+  userId           String
+  title            String
+  body             String
+  badge            Int?
+  sound            String?
+  data             Json?
+  createdAt        DateTime         @default(now())
+  chainId          Int?
+  groupKey         String?
+  originAddress    String?
+  parentCommentId  String?
+  reactionType     String?
+  subjectCommentId String?
+  targetCommentId  String?
+  type             NotificationType @default(system)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type])
+  @@index([originAddress])
+  @@index([targetCommentId])
+  @@index([targetCommentId, reactionType])
+  @@map("notification_events")
+}
+
+enum NotificationType {
+  reply
+  reaction
+  mention
+  follow
+  system
 }

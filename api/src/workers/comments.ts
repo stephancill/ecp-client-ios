@@ -3,7 +3,8 @@ import {
   COMMENTS_QUEUE_NAME,
   NOTIFICATIONS_QUEUE_NAME,
 } from "../lib/constants";
-import { fetchCachedComment } from "../lib/ecp";
+import { cacheUserData, fetchCachedComment } from "../lib/ecp";
+import { sanitizeNotificationData } from "../lib/notifications";
 import { notificationsQueue } from "../lib/queue";
 import { redisQueue } from "../lib/redis";
 import { getCommentAuthorUsername } from "../lib/utils";
@@ -27,6 +28,12 @@ export const commentWorker = new Worker<CommentJobData>(
     });
 
     const authorUsername = getCommentAuthorUsername(comment.author);
+    let parentAuthorAddress: string | undefined;
+    // Cache actor's profile
+    await cacheUserData({
+      author: comment.author.address as `0x${string}`,
+      profile: comment.author,
+    });
 
     if (comment.parentId) {
       // Fetch parent comment
@@ -41,24 +48,54 @@ export const commentWorker = new Worker<CommentJobData>(
 
       if (commentType === 1) {
         // Notify parent author if reaction
+        // Cache parent author's profile
+        await cacheUserData({
+          author: parentComment.author.address as `0x${string}`,
+          profile: parentComment.author,
+        });
+        parentAuthorAddress = parentComment.author.address;
         await notificationsQueue.add(NOTIFICATIONS_QUEUE_NAME, {
           author: parentComment.author.address,
-          notification: {
-            title: `@${authorUsername} ${
-              comment.content === "like" ? "liked" : "reacted"
-            }`,
-            body: `"${parentComment.content}"`,
-          },
+          notification: sanitizeNotificationData({
+            title: `${
+              comment.content === "like" ? "liked" : "reaction"
+            } by @${authorUsername} `,
+            body: parentComment.content,
+            data: {
+              type: comment.content === "like" ? "reaction" : "reaction",
+              reactionType:
+                comment.content === "like" ? "like" : comment.content,
+              commentId: comment.id,
+              parentId: parentComment.id,
+              chainId,
+              actorAddress: comment.author.address,
+              parentAddress: parentComment.author.address,
+            },
+          }),
         });
       } else {
         console.log("Notifying parent if reply", parentComment.author.address);
         // Notify parent if reply
+        // Cache parent author's profile
+        await cacheUserData({
+          author: parentComment.author.address as `0x${string}`,
+          profile: parentComment.author,
+        });
+        parentAuthorAddress = parentComment.author.address;
         await notificationsQueue.add(NOTIFICATIONS_QUEUE_NAME, {
           author: parentComment.author.address,
-          notification: {
-            title: `@${authorUsername} replied`,
+          notification: sanitizeNotificationData({
+            title: `reply from @${authorUsername}`,
             body: comment.content,
-          },
+            data: {
+              type: "reply",
+              commentId: comment.id,
+              parentId: parentComment.id,
+              chainId,
+              actorAddress: comment.author.address,
+              parentAddress: parentComment.author.address,
+            },
+          }),
         });
       }
     }
@@ -79,10 +116,18 @@ export const commentWorker = new Worker<CommentJobData>(
     for (const address of uniqueMentionedAddresses) {
       await notificationsQueue.add(NOTIFICATIONS_QUEUE_NAME, {
         author: address,
-        notification: {
+        notification: sanitizeNotificationData({
           title: `@${authorUsername} mentioned you`,
           body: comment.content,
-        },
+          data: {
+            type: "mention",
+            commentId: comment.id,
+            parentId: parentId ?? null,
+            chainId,
+            actorAddress: comment.author.address,
+            parentAddress: parentAuthorAddress,
+          },
+        }),
       });
     }
 

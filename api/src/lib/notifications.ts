@@ -2,7 +2,67 @@ import { prisma } from "./prisma";
 import * as apn from "apn";
 import * as fs from "fs";
 import { NotificationData } from "../types/notifications";
-import { getAddress, isAddress } from "viem";
+import { isAddress } from "viem";
+
+// Enforce conservative limits to avoid APNs 4KB payload cap
+const MAX_ALERT_TITLE_CHARS = 80;
+const MAX_ALERT_BODY_CHARS = 220;
+
+function truncateString(value: unknown, maxChars: number): string | undefined {
+  if (typeof value !== "string") return undefined;
+  if (value.length <= maxChars) return value;
+  return value.slice(0, Math.max(0, maxChars - 1)).trimEnd() + "\u2026"; // ellipsis
+}
+
+const allowedDataKeys = new Set([
+  "type",
+  "commentId",
+  "parentId",
+  "chainId",
+  "actorAddress",
+  "parentAddress",
+]);
+
+export function sanitizeNotificationData(
+  notification: NotificationData
+): NotificationData {
+  const sanitized: NotificationData = {
+    title:
+      truncateString(notification.title, MAX_ALERT_TITLE_CHARS) ||
+      String(notification.title ?? ""),
+    body:
+      truncateString(notification.body, MAX_ALERT_BODY_CHARS) ||
+      String(notification.body ?? ""),
+  };
+
+  if (typeof notification.badge === "number")
+    sanitized.badge = notification.badge;
+  if (typeof notification.sound === "string")
+    sanitized.sound = notification.sound;
+
+  if (notification.data && typeof notification.data === "object") {
+    const data: Record<string, any> = {};
+    for (const [key, value] of Object.entries(notification.data)) {
+      if (!allowedDataKeys.has(key)) continue; // drop non-essential / large fields
+      if (typeof value === "string") {
+        // Keep IDs/addresses as-is; they are short. Truncate any arbitrary strings.
+        const isHexId = /^0x[0-9a-fA-F]+$/.test(value);
+        data[key] = isHexId ? value : truncateString(value, 256) ?? value;
+      } else if (
+        typeof value === "number" ||
+        typeof value === "boolean" ||
+        value === null
+      ) {
+        data[key] = value;
+      } else {
+        // Drop nested objects/arrays entirely to stay small
+      }
+    }
+    sanitized.data = Object.keys(data).length ? data : undefined;
+  }
+
+  return sanitized;
+}
 
 const apnsKey: string = process.env.APNS_KEY || "";
 const apnsKeyId: string = process.env.APNS_KEY_ID || "";
@@ -113,7 +173,7 @@ export async function sendNotficationToUser({
     // Get all device tokens for the user
     const userNotifications = await prisma.notificationDetails.findMany({
       where: {
-        userId: isAddress(userId) ? getAddress(userId) : userId,
+        userId: isAddress(userId) ? userId.toLowerCase() : userId,
       },
     });
 
@@ -153,21 +213,22 @@ async function sendAPNsNotification(
       return;
     }
 
+    const sanitized = sanitizeNotificationData(notification);
     const note = new apn.Notification();
     note.topic = apnsBundleId!; // must match bundle id (asserted by assertApnsEnv)
     // iOS 13+ requires correct push type; property may not be typed in @types/apn
     (note as any).pushType = "alert";
     note.priority = 10; // immediate delivery for alert
     note.alert = {
-      title: notification.title,
-      body: notification.body,
+      title: sanitized.title,
+      body: sanitized.body,
     } as any;
-    note.sound = notification.sound || "default";
-    if (typeof notification.badge === "number") {
-      note.badge = notification.badge as number;
+    note.sound = sanitized.sound || "default";
+    if (typeof sanitized.badge === "number") {
+      note.badge = sanitized.badge as number;
     }
-    if (notification.data) {
-      note.payload = notification.data;
+    if (sanitized.data) {
+      note.payload = sanitized.data;
     }
 
     const result = await apnsProvider.send(note, deviceToken);

@@ -1,5 +1,6 @@
 ---
-alwaysApply: true
+globs: ecp-client/**
+alwaysApply: false
 ---
 
 # SwiftUI Best Practices Guide

@@ -38,15 +38,13 @@ struct CommentRowView: View {
     private let maxLines = 4
     private let maxHeight: CGFloat = 160 // Approximately 8 lines of text
     
-    // Computed property for consistent username display
+    // Computed property for consistent username display (centralized)
     private var displayUsername: String {
-        if let ensName = comment.author.ens?.name {
-            return ensName
-        } else if let username = comment.author.farcaster?.username, !username.hasPrefix("!") {
-            return username
-        } else {
-            return truncateAddress(comment.author.address)
-        }
+        return Utils.displayName(
+            ensName: comment.author.ens?.name,
+            farcasterUsername: comment.author.farcaster?.username,
+            fallbackAddress: comment.author.address
+        )
     }
     
     // Computed property for trimmed content

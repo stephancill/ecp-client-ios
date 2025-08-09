@@ -17,6 +17,12 @@ struct Utils {
         let suffix = String(address.suffix(4))  // abcd
         return "\(prefix)...\(suffix)"
     }
+    
+    static func displayName(ensName: String?, farcasterUsername: String?, fallbackAddress: String) -> String {
+        if let name = ensName, !name.isEmpty { return name }
+        if let uname = farcasterUsername, !uname.isEmpty { return uname }
+        return truncateAddress(fallbackAddress)
+    }
 }
 
 // MARK: - Data Extensions
