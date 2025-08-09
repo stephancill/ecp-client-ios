@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  notifications NotificationDetails[]
+  approvals     Approval[]
+
+  @@map("users")
+}
+
+model NotificationDetails {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceToken String   // APNs device token
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("notifications")
+  @@index([userId])
+  @@unique([userId, deviceToken]) // Prevent duplicate device tokens per user
+}
+
+model Approval {
+  id          String    @id // Using the composite ID from API: author-app-chainId
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  author      String    // Ethereum address of the approver
+  app         String    // App address (will be the userId)
+  chainId     Int       // Chain ID
+  txHash      String    // Transaction hash
+  logIndex    Int       // Log index from the transaction
+  deletedAt   DateTime? // Soft delete timestamp
+  
+  // Relationship to User (app is the userId)
+  user        User      @relation(fields: [app], references: [id], onDelete: Cascade)
+
+  @@map("approvals")
+  @@index([app])
+  @@index([author])
+  @@index([chainId])
+  @@unique([author, app, chainId]) // Prevent duplicate approvals per author-app-chainId combination
+}
