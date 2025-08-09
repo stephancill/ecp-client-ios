@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>API_BASE_URL</key>
-	<string>https://29376c9e99f0.ngrok-free.app</string>
+	<string>https://town.steer.fun</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
