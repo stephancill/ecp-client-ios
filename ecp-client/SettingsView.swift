@@ -396,6 +396,17 @@ struct SettingsView: View {
         .sheet(isPresented: $showEnterAddress) {
             EnterAddressView(authorAddress: $authorAddress, appAddress: appAddress, commentsService: commentsService)
         }
+        // Trigger backend approvals sync whenever local approval status changes
+        .onChange(of: commentsService.isApproved) { _, newValue in
+            guard let _ = newValue else { return }
+            Task { @MainActor in
+                // Only attempt if authenticated
+                if authService.isAuthenticated {
+                    let api = APIService(authService: authService)
+                    do { _ = try await api.syncApprovals(chainId: 8453) } catch { }
+                }
+            }
+        }
         .alert("Approval Failed", isPresented: $showApprovalError) {
             Button("OK") {
                 showApprovalError = false

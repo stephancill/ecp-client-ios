@@ -90,6 +90,43 @@ class APIService: ObservableObject {
         }
     }
 
+    // MARK: - Approvals
+
+    /// Trigger a server-side approvals sync for the authenticated app address
+    /// - Parameter chainId: Target chain ID (defaults to Base mainnet 8453)
+    /// - Returns: Whether the sync request succeeded
+    func syncApprovals(chainId: Int = 8453) async throws -> Bool {
+        guard let token = authService.getAuthToken() else {
+            throw APIError.notAuthenticated
+        }
+
+        let url = URL(string: "\(baseURL)/api/approvals/sync")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let body = ["chainId": chainId]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.networkError("Invalid response")
+        }
+
+        if httpResponse.statusCode == 200 {
+            let result = try JSONDecoder().decode(SyncApprovalsResult.self, from: data)
+            return result.success
+        } else if httpResponse.statusCode == 401 {
+            await authService.authenticate()
+            throw APIError.authenticationExpired
+        } else {
+            let errorResult = try? JSONDecoder().decode(APIErrorResponse.self, from: data)
+            throw APIError.serverError(errorResult?.error ?? "Unknown error")
+        }
+    }
+
     /// Get notification registration status for current user
     func getNotificationStatus() async throws -> NotificationStatusResult {
         guard let token = authService.getAuthToken() else {
@@ -298,6 +335,12 @@ struct NotificationEventsPage: Codable {
     let success: Bool
     let events: [NotificationEvent]
     let nextCursor: String?
+}
+
+struct SyncApprovalsResult: Codable {
+    let success: Bool
+    let approved: Bool?
+    let approvalsCount: Int?
 }
 
 struct NotificationEvent: Codable, Identifiable {

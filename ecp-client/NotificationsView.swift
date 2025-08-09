@@ -103,13 +103,16 @@ struct NotificationsView: View {
                                 if count > 1 {
                                     Text("\(count) \(event.reactionType ?? "reaction")s on your comment")
                                         .font(.body)
+                                        .foregroundColor(.secondary)
                                 } else {
                                     Text(event.body)
                                         .font(.body)
+                                        .foregroundColor(.secondary)
                                 }
                             } else {
                                 Text(event.body)
                                     .font(.body)
+                                    .foregroundColor(.secondary)
                             }
                         }
                     }

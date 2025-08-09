@@ -2,17 +2,15 @@ import { COMMENT_MANAGER_ADDRESS, CommentManagerABI } from "@ecp.eth/sdk";
 import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 import { commentsQueue } from "./lib/queue";
-import { CommentAddedEvent } from "./abi/CommentAddedEvent";
 
 const publicClient = createPublicClient({
   chain: base,
   transport: http(process.env.BASE_RPC_URL),
 });
 
-const unwatch = publicClient.watchEvent({
+const unwatch = publicClient.watchContractEvent({
   address: COMMENT_MANAGER_ADDRESS,
-  poll: true,
-  event: CommentAddedEvent,
+  abi: CommentManagerABI,
   onLogs: async (logs) => {
     if (!logs.length) return;
     console.log(
