@@ -13,6 +13,7 @@ struct ContentView: View {
     @StateObject private var commentsService = CommentsService()
     @StateObject private var channelsService = ChannelsService()
     @StateObject private var identityService = IdentityService()
+    @EnvironmentObject private var authService: AuthService
     @State private var showingComposeModal = false
     @State private var showingSettingsModal = false
     @State private var currentUserAddress: String?
@@ -203,4 +204,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(AuthService())
 }

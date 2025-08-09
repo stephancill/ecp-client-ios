@@ -8,6 +8,7 @@ class KeychainManager {
     private static let service = "com.ecp-client.keychain"
     private static let privateKeyAccount = "user_private_key"
     private static let identityAddressAccount = "user_identity_address"
+    private static let jwtTokenAccount = "user_jwt_token"
     
     // MARK: - Errors
     enum KeychainError: Error, LocalizedError {
@@ -299,6 +300,126 @@ class KeychainManager {
     static func hasIdentityAddress() -> Bool {
         do {
             return try retrieveIdentityAddress() != nil
+        } catch {
+            return false
+        }
+    }
+    
+    // MARK: - JWT Token Storage
+    
+    /// Stores a JWT token in the keychain
+    /// - Parameter token: The JWT token as a string
+    /// - Throws: KeychainError if storage fails
+    static func storeJWTToken(_ token: String) throws {
+        guard let data = token.data(using: .utf8) else {
+            throw KeychainError.invalidData
+        }
+        
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: jwtTokenAccount,
+            kSecValueData as String: data,
+            kSecAttrSynchronizable as String: false, // Don't sync tokens for security
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        ]
+        
+        let status = SecItemAdd(query as CFDictionary, nil)
+        
+        switch status {
+        case errSecSuccess:
+            break
+        case errSecDuplicateItem:
+            // If item exists, update it
+            try updateJWTToken(token)
+        default:
+            throw KeychainError.unknown(status)
+        }
+    }
+    
+    /// Retrieves the stored JWT token from the keychain
+    /// - Returns: The JWT token as a string, or nil if not found
+    /// - Throws: KeychainError if retrieval fails
+    static func retrieveJWTToken() throws -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: jwtTokenAccount,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        
+        switch status {
+        case errSecSuccess:
+            guard let data = result as? Data,
+                  let token = String(data: data, encoding: .utf8) else {
+                throw KeychainError.invalidData
+            }
+            return token
+        case errSecItemNotFound:
+            return nil
+        default:
+            throw KeychainError.unknown(status)
+        }
+    }
+    
+    /// Updates an existing JWT token in the keychain
+    /// - Parameter token: The new JWT token
+    /// - Throws: KeychainError if update fails
+    static func updateJWTToken(_ token: String) throws {
+        guard let data = token.data(using: .utf8) else {
+            throw KeychainError.invalidData
+        }
+        
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: jwtTokenAccount
+        ]
+        
+        let updateAttributes: [String: Any] = [
+            kSecValueData as String: data
+        ]
+        
+        let status = SecItemUpdate(query as CFDictionary, updateAttributes as CFDictionary)
+        
+        switch status {
+        case errSecSuccess:
+            break
+        case errSecItemNotFound:
+            throw KeychainError.itemNotFound
+        default:
+            throw KeychainError.unknown(status)
+        }
+    }
+    
+    /// Removes the JWT token from the keychain
+    /// - Throws: KeychainError if deletion fails
+    static func deleteJWTToken() throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: jwtTokenAccount
+        ]
+        
+        let status = SecItemDelete(query as CFDictionary)
+        
+        switch status {
+        case errSecSuccess, errSecItemNotFound:
+            break // Success or item didn't exist (both okay)
+        default:
+            throw KeychainError.unknown(status)
+        }
+    }
+    
+    /// Checks if a JWT token exists in the keychain
+    /// - Returns: True if JWT token exists, false otherwise
+    static func hasJWTToken() -> Bool {
+        do {
+            return try retrieveJWTToken() != nil
         } catch {
             return false
         }

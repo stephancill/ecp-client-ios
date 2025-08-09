@@ -17,7 +17,11 @@
 			</array>
 		</dict>
 	</array>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+	<key>API_BASE_URL</key>
+	<string>https://town.steer.fun</string>
 </dict>
 </plist>
