@@ -108,7 +108,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationTitle("Comments")
+            .navigationTitle("Posts")
             .navigationBarTitleDisplayMode(.large)
             .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
             .toolbar {
@@ -121,11 +121,11 @@ struct ContentView: View {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: "bell")
                                 .font(.system(size: 18, weight: .medium))
-                            if notificationService.hasUnread {
+                            if true {
                                 Circle()
                                     .fill(Color.red)
                                     .frame(width: 8, height: 8)
-                                    .offset(x: 6, y: -6)
+                                    .offset(x: 2, y: -2)
                             }
                         }
                         .frame(width: 24, height: 24, alignment: .center)
@@ -258,6 +258,11 @@ struct ContentView: View {
 
 
 #Preview {
-    ContentView()
-        .environmentObject(AuthService())
+    let authService = AuthService()
+    let notificationService = NotificationService(authService: authService)
+    let deepLinkService = DeepLinkService()
+    return ContentView()
+        .environmentObject(authService)
+        .environmentObject(notificationService)
+        .environmentObject(deepLinkService)
 }

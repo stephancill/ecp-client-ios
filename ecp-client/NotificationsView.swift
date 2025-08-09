@@ -67,22 +67,10 @@ struct NotificationsView: View {
                 .listRowBackground(Color.clear)
             }
             if notificationService.isLoadingEvents && notificationService.events.isEmpty {
-                ForEach(0..<6, id: \.self) { _ in
-                    HStack(spacing: 12) {
-                        Circle()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(width: 36, height: 36)
-                        VStack(alignment: .leading, spacing: 6) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(height: 14)
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(height: 12)
-                                .padding(.trailing, 40)
-                        }
-                    }
-                    .redacted(reason: .placeholder)
+                ForEach(0..<skeletonRowCount(), id: \.self) { _ in
+                    NotificationSkeletonRowView()
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                 }
             } else if notificationService.events.isEmpty {
                 VStack(spacing: 8) {
@@ -200,6 +188,13 @@ struct NotificationsView: View {
         // Intentionally no local sheet presentation here; nested sheets can dismiss each other
     }
     
+    private func skeletonRowCount() -> Int {
+        let screenHeight = UIScreen.main.bounds.height
+        let estimatedRowHeight: CGFloat = 78
+        let count = Int(ceil(screenHeight / estimatedRowHeight))
+        return max(8, count)
+    }
+    
     private func refresh() async {
         await notificationService.fetchEvents()
     }
@@ -280,6 +275,60 @@ struct NotificationsView: View {
             if let id = commentId {
                 deepLinkService.pendingRoute = .comment(id: id, focusReplyId: nil, parentId: parentId)
                 dismiss()
+            }
+        }
+    }
+}
+
+// MARK: - NotificationSkeletonRowView
+struct NotificationSkeletonRowView: View {
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var isAnimating = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Circle()
+                .fill(Color.gray.opacity(colorScheme == .dark ? 0.25 : 0.3))
+                .frame(width: 36, height: 36)
+                .shimmering(isAnimating: isAnimating)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Circle()
+                            .fill(Color.gray.opacity(colorScheme == .dark ? 0.25 : 0.3))
+                            .frame(width: 24, height: 24)
+                            .shimmering(isAnimating: isAnimating)
+
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(colorScheme == .dark ? 0.2 : 0.25))
+                            .frame(width: 180, height: 14)
+                            .shimmering(isAnimating: isAnimating)
+                    }
+                    Spacer()
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(colorScheme == .dark ? 0.2 : 0.25))
+                        .frame(width: 36, height: 12)
+                        .shimmering(isAnimating: isAnimating)
+                }
+
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(colorScheme == .dark ? 0.18 : 0.2))
+                    .frame(height: 14)
+                    .shimmering(isAnimating: isAnimating)
+
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(colorScheme == .dark ? 0.16 : 0.18))
+                    .frame(height: 14)
+                    .padding(.trailing, 60)
+                    .shimmering(isAnimating: isAnimating)
+            }
+        }
+        .padding(.vertical, 8)
+        .redacted(reason: .placeholder)
+        .onAppear {
+            withAnimation(Animation.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                isAnimating = true
             }
         }
     }
@@ -413,8 +462,10 @@ struct NotificationIconView: View {
 #Preview {
     let authService = AuthService()
     let notificationService = NotificationService(authService: authService)
+    let deepLinkService = DeepLinkService()
     return NavigationView { NotificationsView() }
         .environmentObject(notificationService)
         .environmentObject(authService)
+        .environmentObject(deepLinkService)
 }
 
