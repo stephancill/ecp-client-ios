@@ -39,6 +39,8 @@
 		D4F388922E44CD420019E0C0 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388912E44CD420019E0C0 /* APIService.swift */; };
 		D4F388942E44CD640019E0C0 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388932E44CD640019E0C0 /* AuthService.swift */; };
 		D4F388982E44D1000019E0C0 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388972E44D1000019E0C0 /* AppConfiguration.swift */; };
+		D4F388982E47F15A0019E0C0 /* ci_pre_xcodebuild.sh in Resources */ = {isa = PBXBuildFile; fileRef = D4F388972E47F15A0019E0C0 /* ci_pre_xcodebuild.sh */; };
+		D4F388992E47F15A0019E0C0 /* ci_post_xcodebuild.sh in Resources */ = {isa = PBXBuildFile; fileRef = D4F388962E47F15A0019E0C0 /* ci_post_xcodebuild.sh */; };
 		D4F3889C2E44D3E50019E0C0 /* DebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889B2E44D3E50019E0C0 /* DebugView.swift */; };
 		D4FF6E4D2E4237C100A51874 /* CommentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4C2E4237C000A51874 /* CommentsService.swift */; };
 		D4FF6E4F2E4238C800A51874 /* ChannelsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */; };
@@ -77,7 +79,9 @@
 		D4F3888F2E44CD390019E0C0 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		D4F388912E44CD420019E0C0 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		D4F388932E44CD640019E0C0 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		D4F388962E47F15A0019E0C0 /* ci_post_xcodebuild.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = ci_post_xcodebuild.sh; sourceTree = "<group>"; };
 		D4F388972E44D1000019E0C0 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
+		D4F388972E47F15A0019E0C0 /* ci_pre_xcodebuild.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = ci_pre_xcodebuild.sh; sourceTree = "<group>"; };
 		D4F3889B2E44D3E50019E0C0 /* DebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugView.swift; sourceTree = "<group>"; };
 		D4FF6E4C2E4237C000A51874 /* CommentsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsService.swift; sourceTree = "<group>"; };
 		D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelsService.swift; sourceTree = "<group>"; };
@@ -103,6 +107,7 @@
 		D4C7B29B2E3E205A002B087F = {
 			isa = PBXGroup;
 			children = (
+				D4F388952E47F0BB0019E0C0 /* ci_scripts */,
 				D4C7B2A62E3E205A002B087F /* ecp-client */,
 				D4C7B2A52E3E205A002B087F /* Products */,
 			);
@@ -163,6 +168,15 @@
 				D4C7B2AE2E3E205C002B087F /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		D4F388952E47F0BB0019E0C0 /* ci_scripts */ = {
+			isa = PBXGroup;
+			children = (
+				D4F388962E47F15A0019E0C0 /* ci_post_xcodebuild.sh */,
+				D4F388972E47F15A0019E0C0 /* ci_pre_xcodebuild.sh */,
+			);
+			path = ci_scripts;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -237,6 +251,8 @@
 			files = (
 				D4C7B2AF2E3E205C002B087F /* Preview Assets.xcassets in Resources */,
 				D4C7B2AC2E3E205C002B087F /* Assets.xcassets in Resources */,
+				D4F388982E47F15A0019E0C0 /* ci_pre_xcodebuild.sh in Resources */,
+				D4F388992E47F15A0019E0C0 /* ci_post_xcodebuild.sh in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
