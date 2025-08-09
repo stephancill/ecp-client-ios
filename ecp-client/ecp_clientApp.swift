@@ -89,6 +89,15 @@ struct ecp_clientApp: App {
                         await notificationService.checkNotificationStatus()
                     }
                 }
+                // Trigger backend approvals sync when approval status toggles from auth
+                .onChange(of: authService.isApproved) { _, _ in
+                    Task { @MainActor in
+                        if authService.isAuthenticated {
+                            let api = APIService(authService: authService)
+                            do { _ = try await api.syncApprovals(chainId: 8453) } catch { }
+                        }
+                    }
+                }
         }
     }
     

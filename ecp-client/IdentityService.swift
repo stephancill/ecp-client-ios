@@ -33,6 +33,13 @@ class IdentityService: ObservableObject {
                 
                 // User is configured if they have identity AND are approved
                 isIdentityConfigured = commentsService.isApproved == true
+
+                // Fire-and-forget backend sync of approvals whenever local approval is re-evaluated
+                if let token = try? KeychainManager.retrieveJWTToken(), !token.isEmpty {
+                    let authService = AuthService()
+                    let api = APIService(authService: authService)
+                    Task { try? await api.syncApprovals(chainId: 8453) }
+                }
             } else {
                 isIdentityConfigured = false
             }

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { basicAuth } from "hono/basic-auth";
 import { getHonoRoute } from "./lib/bullboard";
 import notificationsApp from "./routes/notifications";
+import approvalsApp from "./routes/approvals";
 import siweApp from "./routes/siwe";
 
 const app = new Hono();
@@ -28,6 +29,7 @@ if (bullboardUsername && bullboardPassword) {
 app.route("/bullboard", getHonoRoute("/bullboard"));
 app.route("/api/auth", siweApp);
 app.route("/api/notifications", notificationsApp);
+app.route("/api/approvals", approvalsApp);
 
 app.get("/", (c) => {
   return c.text("Hello Hono!");
