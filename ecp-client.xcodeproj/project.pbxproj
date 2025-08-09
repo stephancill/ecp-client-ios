@@ -7,9 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-        D4F388982E44D1000019E0C0 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388972E44D1000019E0C0 /* AppConfiguration.swift */; };
-        D4F3889C2E44D3E50019E0C0 /* DebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889B2E44D3E50019E0C0 /* DebugView.swift */; };
 		D4542E342E40AA47007F1A6C /* IdentityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4542E332E40AA46007F1A6C /* IdentityService.swift */; };
+		D4AAAAAA2E99999900A00000 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4AAAAA92E99999900A00000 /* NotificationsView.swift */; };
+		D4AAAAB02E99999900A00003 /* DeepLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4AAAAB12E99999900A00004 /* DeepLinkService.swift */; };
+		D4AAAAB22E99999900A00005 /* CommentDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4AAAAB32E99999900A00006 /* CommentDetailView.swift */; };
 		D4BEED912E3EB3EB00A45974 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED902E3EB3EB00A45974 /* SettingsView.swift */; };
 		D4BEED932E3EB7E600A45974 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED922E3EB7E600A45974 /* Utils.swift */; };
 		D4BEED972E3F907100A45974 /* CommentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED962E3F907100A45974 /* CommentManager.swift */; };
@@ -37,6 +38,8 @@
 		D4F388902E44CD390019E0C0 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3888F2E44CD390019E0C0 /* NotificationService.swift */; };
 		D4F388922E44CD420019E0C0 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388912E44CD420019E0C0 /* APIService.swift */; };
 		D4F388942E44CD640019E0C0 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388932E44CD640019E0C0 /* AuthService.swift */; };
+		D4F388982E44D1000019E0C0 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388972E44D1000019E0C0 /* AppConfiguration.swift */; };
+		D4F3889C2E44D3E50019E0C0 /* DebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889B2E44D3E50019E0C0 /* DebugView.swift */; };
 		D4FF6E4D2E4237C100A51874 /* CommentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4C2E4237C000A51874 /* CommentsService.swift */; };
 		D4FF6E4F2E4238C800A51874 /* ChannelsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */; };
 		D4FF6E512E424FC300A51874 /* ImageViewerModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */; };
@@ -44,9 +47,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-        D4F388972E44D1000019E0C0 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
-        D4F3889B2E44D3E50019E0C0 /* DebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugView.swift; sourceTree = "<group>"; };
 		D4542E332E40AA46007F1A6C /* IdentityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityService.swift; sourceTree = "<group>"; };
+		D4AAAAA92E99999900A00000 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
+		D4AAAAB12E99999900A00004 /* DeepLinkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkService.swift; sourceTree = "<group>"; };
+		D4AAAAB32E99999900A00006 /* CommentDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentDetailView.swift; sourceTree = "<group>"; };
 		D4BEED902E3EB3EB00A45974 /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D4BEED922E3EB7E600A45974 /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		D4BEED962E3F907100A45974 /* CommentManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentManager.swift; sourceTree = "<group>"; };
@@ -73,6 +77,8 @@
 		D4F3888F2E44CD390019E0C0 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		D4F388912E44CD420019E0C0 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		D4F388932E44CD640019E0C0 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		D4F388972E44D1000019E0C0 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
+		D4F3889B2E44D3E50019E0C0 /* DebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugView.swift; sourceTree = "<group>"; };
 		D4FF6E4C2E4237C000A51874 /* CommentsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsService.swift; sourceTree = "<group>"; };
 		D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelsService.swift; sourceTree = "<group>"; };
 		D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewerModal.swift; sourceTree = "<group>"; };
@@ -142,6 +148,9 @@
 				D4C7B2C12E3E9DB5002B087F /* BlockiesAvatarView.swift */,
 				D4C7B2C32E3E9DBB002B087F /* ContentParser.swift */,
 				D4C7B2BF2E3E67D9002B087F /* UserDetailView.swift */,
+				D4AAAAA92E99999900A00000 /* NotificationsView.swift */,
+				D4AAAAB32E99999900A00006 /* CommentDetailView.swift */,
+				D4AAAAB12E99999900A00004 /* DeepLinkService.swift */,
 				D4C7B2AB2E3E205C002B087F /* Assets.xcassets */,
 				D4C7B2AD2E3E205C002B087F /* Preview Content */,
 			);
@@ -238,7 +247,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D4F388982E44D1000019E0C0 /* AppConfiguration.swift in Sources */, 
+				D4F388982E44D1000019E0C0 /* AppConfiguration.swift in Sources */,
 				D4F3889C2E44D3E50019E0C0 /* DebugView.swift in Sources */,
 				D4C7B2D92E3EAFD9002B087F /* KeychainManager.swift in Sources */,
 				D4C7B2CF2E3E9DD8002B087F /* CommentRowView.swift in Sources */,
@@ -265,6 +274,9 @@
 				D4542E342E40AA47007F1A6C /* IdentityService.swift in Sources */,
 				D4F388922E44CD420019E0C0 /* APIService.swift in Sources */,
 				D4FF6E512E424FC300A51874 /* ImageViewerModal.swift in Sources */,
+				D4AAAAAA2E99999900A00000 /* NotificationsView.swift in Sources */,
+				D4AAAAB22E99999900A00005 /* CommentDetailView.swift in Sources */,
+				D4AAAAB02E99999900A00003 /* DeepLinkService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

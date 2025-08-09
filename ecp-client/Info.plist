@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>API_BASE_URL</key>
+	<string>https://29376c9e99f0.ngrok-free.app</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -21,7 +23,5 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
-	<key>API_BASE_URL</key>
-	<string>https://town.steer.fun</string>
 </dict>
 </plist>

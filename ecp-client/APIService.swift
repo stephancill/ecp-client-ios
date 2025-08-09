@@ -181,6 +181,40 @@ class APIService: ObservableObject {
         }
     }
 
+    // MARK: - Notification Events (History)
+
+    /// Fetch historical notification events
+    func getNotificationEvents(limit: Int = 50, cursor: String? = nil) async throws -> NotificationEventsPage {
+        guard let token = authService.getAuthToken() else {
+            throw APIError.notAuthenticated
+        }
+
+        var components = URLComponents(string: "\(baseURL)/api/notifications/events")!
+        var queryItems: [URLQueryItem] = [URLQueryItem(name: "limit", value: String(limit))]
+        if let cursor = cursor { queryItems.append(URLQueryItem(name: "cursor", value: cursor)) }
+        components.queryItems = queryItems
+        let url = components.url!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.networkError("Invalid response")
+        }
+
+        if httpResponse.statusCode == 200 {
+            let result = try JSONDecoder().decode(NotificationEventsPage.self, from: data)
+            return result
+        } else if httpResponse.statusCode == 401 {
+            await authService.authenticate()
+            throw APIError.authenticationExpired
+        } else {
+            let errorResult = try? JSONDecoder().decode(APIErrorResponse.self, from: data)
+            throw APIError.serverError(errorResult?.error ?? "Unknown error")
+        }
+    }
+
     // MARK: - Generic API Methods
     
     /// Make an authenticated API request
@@ -258,6 +292,95 @@ struct NotificationDetails: Codable, Identifiable {
     let deviceToken: String
     let createdAt: String
     let updatedAt: String
+}
+
+struct NotificationEventsPage: Codable {
+    let success: Bool
+    let events: [NotificationEvent]
+    let nextCursor: String?
+}
+
+struct NotificationEvent: Codable, Identifiable {
+    let id: String
+    let type: String?
+    let originAddress: String?
+    let chainId: Int?
+    let subjectCommentId: String?
+    let targetCommentId: String?
+    let parentCommentId: String?
+    let reactionType: String?
+    let groupKey: String?
+    let title: String
+    let body: String
+    let badge: Int?
+    let sound: String?
+    let data: [String: JSONValue]? // arbitrary JSON payload
+    let createdAt: String
+    let actorProfile: AuthorProfile?
+    let parentProfile: AuthorProfile?
+}
+
+// Author profile model mirrored from Indexer API subset
+struct AuthorProfile: Codable {
+    let address: String
+    let ens: ENSProfile?
+    let farcaster: FarcasterProfile?
+}
+
+struct ENSProfile: Codable {
+    let name: String
+    let avatarUrl: String?
+}
+
+struct FarcasterProfile: Codable {
+    let fid: Int?
+    let pfpUrl: String?
+    let displayName: String?
+    let username: String?
+}
+
+// Minimal JSON value to decode arbitrary notification data payloads
+enum JSONValue: Codable {
+    case string(String)
+    case number(Double)
+    case bool(Bool)
+    case object([String: JSONValue])
+    case array([JSONValue])
+    case null
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if container.decodeNil() { self = .null; return }
+        if let b = try? container.decode(Bool.self) { self = .bool(b); return }
+        if let n = try? container.decode(Double.self) { self = .number(n); return }
+        if let s = try? container.decode(String.self) { self = .string(s); return }
+        if let arr = try? container.decode([JSONValue].self) { self = .array(arr); return }
+        if let obj = try? container.decode([String: JSONValue].self) { self = .object(obj); return }
+        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unsupported JSON type")
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let s): try container.encode(s)
+        case .number(let n): try container.encode(n)
+        case .bool(let b): try container.encode(b)
+        case .object(let o): try container.encode(o)
+        case .array(let a): try container.encode(a)
+        case .null: try container.encodeNil()
+        }
+    }
+}
+
+extension JSONValue {
+    var stringValue: String? {
+        switch self {
+        case .string(let s): return s
+        case .number(let n): return String(n)
+        case .bool(let b): return b ? "true" : "false"
+        default: return nil
+        }
+    }
 }
 
 struct APIErrorResponse: Codable {

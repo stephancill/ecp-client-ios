@@ -357,7 +357,7 @@ struct SettingsView: View {
                     }
                 }
 
-                // Debug Section
+                // Debug & Notifications Section
                 Section(
                     header: Text("Debug")
                 ) {
@@ -366,6 +366,14 @@ struct SettingsView: View {
                             Image(systemName: "wrench.and.screwdriver")
                                 .foregroundColor(.orange)
                             Text("Debug Tools")
+                            Spacer()
+                        }
+                    }
+                    NavigationLink(destination: NotificationsView()) {
+                        HStack {
+                            Image(systemName: "bell")
+                                .foregroundColor(.blue)
+                            Text("Notifications")
                             Spacer()
                         }
                     }

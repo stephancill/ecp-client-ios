@@ -14,10 +14,14 @@ struct ContentView: View {
     @StateObject private var channelsService = ChannelsService()
     @StateObject private var identityService = IdentityService()
     @EnvironmentObject private var authService: AuthService
+    @EnvironmentObject private var notificationService: NotificationService
     @State private var showingComposeModal = false
     @State private var showingSettingsModal = false
+    @State private var showingNotificationsModal = false
     @State private var currentUserAddress: String?
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var deepLinkService: DeepLinkService
+    @State private var presentedDetailRoute: DeepLinkService.Route?
     
     var body: some View {
         NavigationView {
@@ -108,7 +112,24 @@ struct ContentView: View {
             .navigationBarTitleDisplayMode(.large)
             .background(colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.clear)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.impactOccurred()
+                        showingNotificationsModal = true
+                    }) {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: "bell")
+                                .font(.system(size: 18, weight: .medium))
+                            if notificationService.hasUnread {
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 8, height: 8)
+                                    .offset(x: 6, y: -6)
+                            }
+                        }
+                        .frame(width: 24, height: 24, alignment: .center)
+                    }
                     Button(action: {
                         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                         impactFeedback.impactOccurred()
@@ -171,6 +192,11 @@ struct ContentView: View {
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $showingNotificationsModal) {
+            NavigationView { NotificationsView() }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
         .onAppear {
             if commentsService.comments.isEmpty {
                 commentsService.fetchComments(refresh: true)
@@ -184,6 +210,35 @@ struct ContentView: View {
             // Check identity configuration
             Task {
                 await identityService.checkIdentityConfiguration()
+            }
+        }
+        .sheet(item: $presentedDetailRoute) { route in
+            switch route {
+            case .comment(let id, let focus, let parentId):
+                NavigationView { CommentDetailView(commentId: id, focusReplyId: focus, parentId: parentId) }
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+            }
+        }
+        .onChange(of: deepLinkService.route) { _, newValue in
+            guard let route = newValue else { return }
+            presentedDetailRoute = route
+            // Clear source after scheduling presentation, but don't trigger dismissal
+            DispatchQueue.main.async {
+                deepLinkService.route = nil
+            }
+        }
+        .onChange(of: showingNotificationsModal) { _, newValue in
+            // When notifications modal closes, promote pendingRoute to route to trigger presentation
+            if newValue == false, let pending = deepLinkService.pendingRoute {
+                DispatchQueue.main.async {
+                    self.presentedDetailRoute = pending
+                    deepLinkService.pendingRoute = nil
+                }
+            }
+            // When the sheet opens, mark all as read
+            if newValue == true {
+                notificationService.markAllAsRead()
             }
         }
     }

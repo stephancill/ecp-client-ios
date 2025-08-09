@@ -1,4 +1,3 @@
-import { getAddress } from "viem";
 import { prisma } from "./prisma";
 
 type SyncApprovalsParams = {
@@ -22,7 +21,7 @@ export async function syncApprovalsForApp(
   params: SyncApprovalsParams
 ): Promise<SyncApprovalsResult> {
   const chainId = params.chainId ?? 8453;
-  const app = getAddress(params.appAddress);
+  const app = params.appAddress.toLowerCase();
 
   // Ensure the app user exists
   try {
@@ -47,8 +46,17 @@ export async function syncApprovalsForApp(
         await Promise.all(
           data.results.map((approval: any) =>
             prisma.approval.upsert({
-              where: { id: approval.id },
+              where: {
+                author_app_chainId: {
+                  author: approval.author.toLowerCase(),
+                  app,
+                  chainId: approval.chainId,
+                },
+              },
               update: {
+                id: approval.id,
+                txHash: approval.txHash,
+                logIndex: approval.logIndex,
                 updatedAt: new Date(approval.updatedAt),
                 deletedAt: approval.deletedAt
                   ? new Date(approval.deletedAt)
@@ -56,7 +64,7 @@ export async function syncApprovalsForApp(
               },
               create: {
                 id: approval.id,
-                author: getAddress(approval.author),
+                author: approval.author.toLowerCase(),
                 app,
                 chainId: approval.chainId,
                 txHash: approval.txHash,

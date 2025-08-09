@@ -1,11 +1,10 @@
 import { Hono } from "hono";
 import { deleteCookie, setCookie } from "hono/cookie";
 import { jwt, sign } from "hono/jwt";
-import { getAddress, verifyMessage } from "viem";
+import { verifyMessage } from "viem";
 import { generateSiweNonce, parseSiweMessage } from "viem/siwe";
-import { redisCache } from "../lib/redis";
-import { prisma } from "../lib/prisma";
 import { syncApprovalsForApp } from "../lib/approvals";
+import { redisCache } from "../lib/redis";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key";
 
@@ -94,7 +93,7 @@ app.post("/verify", async (c) => {
 
     // Issue a JWT token for the user in a HTTP-only cookie.
     const token = await sign(
-      { exp, sub: getAddress(userAppAddress) },
+      { exp, sub: userAppAddress.toLowerCase() },
       JWT_SECRET
     );
     setCookie(c, "auth", token, {

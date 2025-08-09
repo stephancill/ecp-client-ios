@@ -121,6 +121,12 @@ class AuthService: ObservableObject {
             return nil
         }
     }
+
+    /// Returns the derived app address used as user id for the backend
+    /// This is used by clients to namespace per-user local state (e.g., last read timestamps)
+    func getAppAddress() -> String? {
+        return appAddress
+    }
     
     /// Check if the current token is still valid
     func validateToken() async -> Bool {

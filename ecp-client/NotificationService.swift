@@ -16,10 +16,16 @@ class NotificationService: ObservableObject {
     @Published var isRegistered = false
     @Published var deviceToken: String?
     @Published var notificationError: String?
+    @Published var events: [NotificationEvent] = []
+    @Published var isLoadingEvents: Bool = false
+    @Published var isLoadingMore: Bool = false
+    @Published var nextCursor: String? = nil
+    @Published var hasUnread: Bool = false
     
     // MARK: - Private Properties
     private let authService: AuthService
     private let apiService: APIService
+    private var unreadPollTask: Task<Void, Never>? = nil
     
     // MARK: - Initialization
     init(authService: AuthService) {
@@ -30,6 +36,9 @@ class NotificationService: ObservableObject {
         Task {
             await checkNotificationStatus()
         }
+
+        // Start unread polling
+        startUnreadPolling()
     }
     
     // MARK: - Public Methods
@@ -190,6 +199,44 @@ class NotificationService: ObservableObject {
             notificationError = "Test notification failed: \(error.localizedDescription)"
         }
     }
+
+    /// Fetch notification history
+    func fetchEvents(limit: Int = 50) async {
+        guard authService.isAuthenticated else { return }
+        isLoadingEvents = true
+        defer { isLoadingEvents = false }
+        do {
+            let page = try await apiService.getNotificationEvents(limit: limit)
+            await MainActor.run {
+                self.events = page.events
+                self.nextCursor = page.nextCursor
+                self.updateUnreadFromLatest()
+            }
+        } catch {
+            await MainActor.run {
+                self.notificationError = "Failed to load notifications: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    func loadMoreIfNeeded(currentItem item: NotificationEvent?) async {
+        guard let item = item else { return }
+        guard let last = events.last, last.id == item.id else { return }
+        guard !isLoadingMore, let cursor = nextCursor else { return }
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+        do {
+            let page = try await apiService.getNotificationEvents(limit: 50, cursor: cursor)
+            await MainActor.run {
+                self.events.append(contentsOf: page.events)
+                self.nextCursor = page.nextCursor
+            }
+        } catch {
+            await MainActor.run {
+                self.notificationError = "Failed to load more: \(error.localizedDescription)"
+            }
+        }
+    }
     
     // MARK: - Private Methods
     
@@ -197,6 +244,93 @@ class NotificationService: ObservableObject {
         await MainActor.run {
             UIApplication.shared.registerForRemoteNotifications()
         }
+    }
+
+    // MARK: - Unread Tracking
+    private func startUnreadPolling() {
+        unreadPollTask?.cancel()
+        unreadPollTask = Task { [weak self] in
+            guard let self = self else { return }
+            while !Task.isCancelled {
+                do {
+                    // Lightweight: ask for just 1 event
+                    let page = try await self.apiService.getNotificationEvents(limit: 1)
+                    await MainActor.run {
+                        if let latest = page.events.first {
+                            self.updateUnreadFrom(latestCreatedAt: latest.createdAt)
+                        } else {
+                            self.hasUnread = false
+                        }
+                    }
+                } catch {
+                    // ignore transient errors
+                }
+                // Poll every 30 seconds
+                try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
+            }
+        }
+    }
+
+    private func updateUnreadFromLatest() {
+        if let latest = events.first?.createdAt {
+            updateUnreadFrom(latestCreatedAt: latest)
+        } else {
+            hasUnread = false
+        }
+    }
+
+    private func updateUnreadFrom(latestCreatedAt: String) {
+        guard let latestDate = parseISODate(latestCreatedAt) else { hasUnread = false; return }
+        let lastRead = lastReadDate()
+        hasUnread = lastRead == nil || latestDate > lastRead!
+    }
+
+    func markAllAsRead() {
+        saveLastReadDate(Date())
+        updateUnreadFromLatest()
+    }
+
+    private func userDefaultsKey() -> String {
+        let userId = authService.getAppAddress() ?? "anonymous"
+        return "notifications.lastRead.\(userId.lowercased())"
+    }
+
+    private func lastReadDate() -> Date? {
+        let key = userDefaultsKey()
+        if let iso = UserDefaults.standard.string(forKey: key) {
+            return parseISODate(iso)
+        }
+        return nil
+    }
+
+    private func saveLastReadDate(_ date: Date) {
+        let key = userDefaultsKey()
+        let iso = iso8601String(from: date)
+        UserDefaults.standard.set(iso, forKey: key)
+    }
+
+    private func parseISODate(_ iso: String) -> Date? {
+        let isoFs = ISO8601DateFormatter()
+        isoFs.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        isoFs.timeZone = TimeZone(secondsFromGMT: 0)
+        if let d = isoFs.date(from: iso) { return d }
+        let isoNoFs = ISO8601DateFormatter()
+        isoNoFs.formatOptions = [.withInternetDateTime]
+        isoNoFs.timeZone = TimeZone(secondsFromGMT: 0)
+        if let d = isoNoFs.date(from: iso) { return d }
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "en_US_POSIX")
+        df.timeZone = TimeZone(secondsFromGMT: 0)
+        df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        if let d = df.date(from: iso) { return d }
+        return nil
+    }
+
+    private func iso8601String(from date: Date) -> String {
+        let isoFs = ISO8601DateFormatter()
+        isoFs.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        isoFs.timeZone = TimeZone(secondsFromGMT: 0)
+        return isoFs.string(from: date)
     }
 }
 

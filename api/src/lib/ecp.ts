@@ -1,5 +1,8 @@
-import { fetchComment } from "@ecp.eth/sdk/indexer";
-import { withCache } from "./redis";
+import {
+  fetchComment,
+  IndexerAPICommentWithRepliesSchemaType,
+} from "@ecp.eth/sdk/indexer";
+import { redisCache, withCache } from "./redis";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -62,4 +65,33 @@ export async function fetchCachedComment(params: {
   );
 
   return result;
+}
+
+export async function cacheUserData(params: {
+  author: `0x${string}`;
+  profile: IndexerAPICommentWithRepliesSchemaType["author"];
+}) {
+  const { author, profile } = params;
+
+  await redisCache.setex(
+    `ecp:author:${author.toLowerCase()}`,
+    60 * 60 * 24 * 2, // 7 days
+    JSON.stringify(profile)
+  );
+}
+
+export async function fetchBatchCachedUserData(params: {
+  authors: `0x${string}`[];
+}) {
+  const { authors } = params;
+  const profiles = await redisCache.mget(
+    authors.map((author) => `ecp:author:${author.toLowerCase()}`)
+  );
+
+  return profiles.reduce((acc, profile, index) => {
+    if (profile) {
+      acc[authors[index]] = JSON.parse(profile);
+    }
+    return acc;
+  }, {} as Record<`0x${string}`, IndexerAPICommentWithRepliesSchemaType["author"]>);
 }
