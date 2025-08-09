@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        D4F388982E44D1000019E0C0 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388972E44D1000019E0C0 /* AppConfiguration.swift */; };
+        D4F3889C2E44D3E50019E0C0 /* DebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889B2E44D3E50019E0C0 /* DebugView.swift */; };
 		D4542E342E40AA47007F1A6C /* IdentityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4542E332E40AA46007F1A6C /* IdentityService.swift */; };
 		D4BEED912E3EB3EB00A45974 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED902E3EB3EB00A45974 /* SettingsView.swift */; };
 		D4BEED932E3EB7E600A45974 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BEED922E3EB7E600A45974 /* Utils.swift */; };
@@ -32,6 +34,9 @@
 		D4C7B2D72E3EACF7002B087F /* Web3PromiseKit in Frameworks */ = {isa = PBXBuildFile; productRef = D4C7B2D62E3EACF7002B087F /* Web3PromiseKit */; };
 		D4C7B2D92E3EAFD9002B087F /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */; };
 		D4F3888D2E437A5C0019E0C0 /* ParsedContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3888C2E437A5C0019E0C0 /* ParsedContentView.swift */; };
+		D4F388902E44CD390019E0C0 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3888F2E44CD390019E0C0 /* NotificationService.swift */; };
+		D4F388922E44CD420019E0C0 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388912E44CD420019E0C0 /* APIService.swift */; };
+		D4F388942E44CD640019E0C0 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388932E44CD640019E0C0 /* AuthService.swift */; };
 		D4FF6E4D2E4237C100A51874 /* CommentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4C2E4237C000A51874 /* CommentsService.swift */; };
 		D4FF6E4F2E4238C800A51874 /* ChannelsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */; };
 		D4FF6E512E424FC300A51874 /* ImageViewerModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */; };
@@ -39,6 +44,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+        D4F388972E44D1000019E0C0 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
+        D4F3889B2E44D3E50019E0C0 /* DebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugView.swift; sourceTree = "<group>"; };
 		D4542E332E40AA46007F1A6C /* IdentityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityService.swift; sourceTree = "<group>"; };
 		D4BEED902E3EB3EB00A45974 /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D4BEED922E3EB7E600A45974 /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
@@ -62,6 +69,10 @@
 		D4C7B2C92E3E9DD8002B087F /* CommentRowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentRowView.swift; sourceTree = "<group>"; };
 		D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		D4F3888C2E437A5C0019E0C0 /* ParsedContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsedContentView.swift; sourceTree = "<group>"; };
+		D4F3888E2E44C4840019E0C0 /* ecp-client.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "ecp-client.entitlements"; sourceTree = "<group>"; };
+		D4F3888F2E44CD390019E0C0 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		D4F388912E44CD420019E0C0 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		D4F388932E44CD640019E0C0 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		D4FF6E4C2E4237C000A51874 /* CommentsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsService.swift; sourceTree = "<group>"; };
 		D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelsService.swift; sourceTree = "<group>"; };
 		D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewerModal.swift; sourceTree = "<group>"; };
@@ -102,6 +113,9 @@
 		D4C7B2A62E3E205A002B087F /* ecp-client */ = {
 			isa = PBXGroup;
 			children = (
+				D4F388972E44D1000019E0C0 /* AppConfiguration.swift */,
+				D4F3889B2E44D3E50019E0C0 /* DebugView.swift */,
+				D4F3888E2E44C4840019E0C0 /* ecp-client.entitlements */,
 				D4BEED9D2E3FCED400A45974 /* Info.plist */,
 				D4C7B2A72E3E205A002B087F /* ecp_clientApp.swift */,
 				D4C7B2A92E3E205A002B087F /* ContentView.swift */,
@@ -111,9 +125,12 @@
 				D4C7B2C52E3E9DD8002B087F /* CommentSkeletonView.swift */,
 				D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */,
 				D4BEED962E3F907100A45974 /* CommentManager.swift */,
+				D4F3888F2E44CD390019E0C0 /* NotificationService.swift */,
 				D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */,
 				D4542E332E40AA46007F1A6C /* IdentityService.swift */,
 				D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */,
+				D4F388932E44CD640019E0C0 /* AuthService.swift */,
+				D4F388912E44CD420019E0C0 /* APIService.swift */,
 				D4BEED9E2E3FD11100A45974 /* WalletConfigurationService.swift */,
 				D4BEED982E3FB10400A45974 /* CommentPollingService.swift */,
 				D4F3888C2E437A5C0019E0C0 /* ParsedContentView.swift */,
@@ -221,6 +238,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4F388982E44D1000019E0C0 /* AppConfiguration.swift in Sources */, 
+				D4F3889C2E44D3E50019E0C0 /* DebugView.swift in Sources */,
 				D4C7B2D92E3EAFD9002B087F /* KeychainManager.swift in Sources */,
 				D4C7B2CF2E3E9DD8002B087F /* CommentRowView.swift in Sources */,
 				D4C7B2AA2E3E205A002B087F /* ContentView.swift in Sources */,
@@ -228,6 +247,7 @@
 				D4BEED992E3FB10400A45974 /* CommentPollingService.swift in Sources */,
 				D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */,
 				D4C7B2CB2E3E9DD8002B087F /* CommentSkeletonView.swift in Sources */,
+				D4F388942E44CD640019E0C0 /* AuthService.swift in Sources */,
 				D4BEED9F2E3FD11100A45974 /* WalletConfigurationService.swift in Sources */,
 				D4BEED932E3EB7E600A45974 /* Utils.swift in Sources */,
 				D4C7B2CD2E3E9DD8002B087F /* RepliesView.swift in Sources */,
@@ -240,8 +260,10 @@
 				D4FF6E4F2E4238C800A51874 /* ChannelsService.swift in Sources */,
 				D4BEED972E3F907100A45974 /* CommentManager.swift in Sources */,
 				D4C7B2C42E3E9DBB002B087F /* ContentParser.swift in Sources */,
+				D4F388902E44CD390019E0C0 /* NotificationService.swift in Sources */,
 				D4C7B2B92E3E2C62002B087F /* ComposeCommentView.swift in Sources */,
 				D4542E342E40AA47007F1A6C /* IdentityService.swift in Sources */,
+				D4F388922E44CD420019E0C0 /* APIService.swift in Sources */,
 				D4FF6E512E424FC300A51874 /* ImageViewerModal.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -373,6 +395,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "ecp-client/ecp-client.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"ecp-client/Preview Content\"";
@@ -381,6 +404,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ecp-client/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = town;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -409,6 +433,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "ecp-client/ecp-client.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"ecp-client/Preview Content\"";
@@ -417,6 +442,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ecp-client/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = town;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

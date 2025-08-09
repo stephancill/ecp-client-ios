@@ -44,12 +44,6 @@ struct ParsedContentView: View {
             }
         }
         
-        print("📸 ParsedContentView - Total segments: \(segments.count)")
-        print("📸 ParsedContentView - Image references found: \(imageReferences.count)")
-        for (index, imageRef) in imageReferences.enumerated() {
-            print("📸 Image \(index): \(imageRef.url ?? "no URL")")
-        }
-        
         return ParsedContentResult(textSegments: textSegments, imageReferences: imageReferences)
     }
     

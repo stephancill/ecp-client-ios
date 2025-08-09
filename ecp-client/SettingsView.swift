@@ -13,6 +13,8 @@ import CoinbaseWalletSDK
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var authService: AuthService
+    @EnvironmentObject private var notificationService: NotificationService
     @State private var privateKey: String = ""
     @State private var appAddress: String = ""
     @State private var isPrivateKeyVisible = false
@@ -354,6 +356,20 @@ struct SettingsView: View {
                         .disabled(isFundingAppAccount)
                     }
                 }
+
+                // Debug Section
+                Section(
+                    header: Text("Debug")
+                ) {
+                    NavigationLink(destination: DebugView()) {
+                        HStack {
+                            Image(systemName: "wrench.and.screwdriver")
+                                .foregroundColor(.orange)
+                            Text("Debug Tools")
+                            Spacer()
+                        }
+                    }
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
@@ -364,6 +380,7 @@ struct SettingsView: View {
                     }
                 }
             }
+            
         }
         .sheet(isPresented: $showConnectWallet) {
             ConnectWalletView(authorAddress: $authorAddress, appAddress: appAddress, commentsService: commentsService)
@@ -915,5 +932,9 @@ struct EnterAddressView: View {
 }
 
 #Preview("Settings") {
-    SettingsView()
+    let authService = AuthService()
+    let notificationService = NotificationService(authService: authService)
+    return SettingsView()
+        .environmentObject(authService)
+        .environmentObject(notificationService)
 } 
