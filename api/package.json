@@ -2,8 +2,10 @@
   "name": "town-api",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "workers": "bun run --hot src/workers/index.ts",
-    "listener": "bun run src/listener.ts"
+    "workers:dev": "bun run --hot src/workers/index.ts",
+    "workers": "bun run src/workers/index.ts",
+    "listener": "bun run src/listener.ts",
+    "api": "bun run src/index.ts"
   },
   "dependencies": {
     "@bull-board/api": "^6.12.0",
