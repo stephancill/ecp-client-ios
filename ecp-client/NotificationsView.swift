@@ -18,6 +18,54 @@ struct NotificationsView: View {
     
     var body: some View {
         List {
+            // Permission banner
+            if !notificationService.isRegistered {
+                HStack(alignment: .center, spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: "bell.badge.fill")
+                            .foregroundColor(.blue)
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Notifications are off")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text("Enable push notifications to get replies and mentions.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    Button(action: {
+                        let impact = UIImpactFeedbackGenerator(style: .light)
+                        impact.impactOccurred()
+                        Task {
+                            await notificationService.requestNotificationPermissions()
+                            await notificationService.checkNotificationStatus()
+                        }
+                    }) {
+                        Text("Enable")
+                            .font(.system(.footnote, weight: .semibold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.blue.opacity(0.08))
+                )
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            }
             if notificationService.isLoadingEvents && notificationService.events.isEmpty {
                 ForEach(0..<6, id: \.self) { _ in
                     HStack(spacing: 12) {
@@ -145,6 +193,7 @@ struct NotificationsView: View {
             if notificationService.events.isEmpty {
                 Task { await notificationService.fetchEvents() }
             }
+            Task { await notificationService.checkNotificationStatus() }
             // Mark all as read when opening the notifications view
             notificationService.markAllAsRead()
         }

@@ -51,6 +51,7 @@ struct ecp_clientApp: App {
     @StateObject private var authService = AuthService()
     @StateObject private var notificationService: NotificationService
     @StateObject private var deepLinkService = DeepLinkService()
+    @AppStorage("hasPromptedNotifications") private var hasPromptedNotifications: Bool = false
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     init() {
@@ -87,6 +88,16 @@ struct ecp_clientApp: App {
                         
                         // Check notification status after authentication
                         await notificationService.checkNotificationStatus()
+
+                        // On first launch, proactively prompt for notifications so the
+                        // system Settings toggle appears for this app.
+                        if !hasPromptedNotifications {
+                            let settings = await UNUserNotificationCenter.current().notificationSettings()
+                            if settings.authorizationStatus == .notDetermined {
+                                await notificationService.requestNotificationPermissions()
+                            }
+                            hasPromptedNotifications = true
+                        }
                     }
                 }
                 // Trigger backend approvals sync when approval status toggles from auth
