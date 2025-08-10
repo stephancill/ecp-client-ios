@@ -142,7 +142,8 @@ struct RepliesView: View {
                 onCommentPosted: {
                     // Refresh the replies when comment is posted
                     repliesService.fetchComments(refresh: true)
-                }
+                },
+                channelsService: channelsService
             )
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)

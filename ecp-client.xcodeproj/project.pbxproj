@@ -41,6 +41,7 @@
 		D4F388982E44D1000019E0C0 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388972E44D1000019E0C0 /* AppConfiguration.swift */; };
 		D4F388982E47F15A0019E0C0 /* ci_pre_xcodebuild.sh in Resources */ = {isa = PBXBuildFile; fileRef = D4F388972E47F15A0019E0C0 /* ci_pre_xcodebuild.sh */; };
 		D4F388992E47F15A0019E0C0 /* ci_post_xcodebuild.sh in Resources */ = {isa = PBXBuildFile; fileRef = D4F388962E47F15A0019E0C0 /* ci_post_xcodebuild.sh */; };
+		D4F3889B2E48A5760019E0C0 /* ChannelManagerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889A2E48A5760019E0C0 /* ChannelManagerService.swift */; };
 		D4F3889C2E44D3E50019E0C0 /* DebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889B2E44D3E50019E0C0 /* DebugView.swift */; };
 		D4FF6E4D2E4237C100A51874 /* CommentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4C2E4237C000A51874 /* CommentsService.swift */; };
 		D4FF6E4F2E4238C800A51874 /* ChannelsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */; };
@@ -82,6 +83,7 @@
 		D4F388962E47F15A0019E0C0 /* ci_post_xcodebuild.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = ci_post_xcodebuild.sh; sourceTree = "<group>"; };
 		D4F388972E44D1000019E0C0 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		D4F388972E47F15A0019E0C0 /* ci_pre_xcodebuild.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = ci_pre_xcodebuild.sh; sourceTree = "<group>"; };
+		D4F3889A2E48A5760019E0C0 /* ChannelManagerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelManagerService.swift; sourceTree = "<group>"; };
 		D4F3889B2E44D3E50019E0C0 /* DebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugView.swift; sourceTree = "<group>"; };
 		D4FF6E4C2E4237C000A51874 /* CommentsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsService.swift; sourceTree = "<group>"; };
 		D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelsService.swift; sourceTree = "<group>"; };
@@ -135,6 +137,7 @@
 				D4C7B2C92E3E9DD8002B087F /* CommentRowView.swift */,
 				D4C7B2C52E3E9DD8002B087F /* CommentSkeletonView.swift */,
 				D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */,
+				D4F3889A2E48A5760019E0C0 /* ChannelManagerService.swift */,
 				D4BEED962E3F907100A45974 /* CommentManager.swift */,
 				D4F3888F2E44CD390019E0C0 /* NotificationService.swift */,
 				D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */,
@@ -292,6 +295,7 @@
 				D4FF6E512E424FC300A51874 /* ImageViewerModal.swift in Sources */,
 				D4AAAAAA2E99999900A00000 /* NotificationsView.swift in Sources */,
 				D4AAAAB22E99999900A00005 /* CommentDetailView.swift in Sources */,
+				D4F3889B2E48A5760019E0C0 /* ChannelManagerService.swift in Sources */,
 				D4AAAAB02E99999900A00003 /* DeepLinkService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
