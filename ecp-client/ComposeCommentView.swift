@@ -8,6 +8,7 @@
 import SwiftUI
 import Web3
 import CachedAsyncImage
+import BigInt
 
 struct ComposeCommentView: View {
     @Environment(\.dismiss) private var dismiss
@@ -17,6 +18,9 @@ struct ComposeCommentView: View {
     @State private var showingSettings = false
     @StateObject private var commentsService = CommentsContractService()
     @StateObject private var pollingService = CommentPollingService()
+    @StateObject private var balanceService = BalanceService()
+    @State private var hasSufficientBalance: Bool = true
+    @Environment(\.colorScheme) private var colorScheme
     
     let identityService: IdentityService
     let parentComment: Comment?
@@ -31,6 +35,25 @@ struct ComposeCommentView: View {
     var body: some View {
         NavigationView {
             VStack(alignment: .leading, spacing: 16) {
+                if identityService.isIdentityConfigured {
+                    // Insufficient funds banner
+                    if !hasSufficientBalance {
+                        InfoBannerView(
+                            iconSystemName: "creditcard.trianglebadge.exclamation",
+                            iconBackgroundColor: .orange.opacity(0.15),
+                            iconForegroundColor: .orange,
+                            title: "Insufficient funds",
+                            subtitle: "Fund your app account to post."
+                                + (balanceService.balance.isEmpty ? "" : " Balance: \(balanceService.balance)"),
+                            buttonTitle: "Fund",
+                            buttonAction: { showingSettings = true }
+                        )
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.orange.opacity(0.08))
+                        )
+                    }
+                }
                 if identityService.isCheckingIdentity {
                     // Loading state while checking configuration
                     VStack(spacing: 16) {
@@ -229,8 +252,8 @@ struct ComposeCommentView: View {
                         Button("Post") {
                             postComment()
                         }
-                        .disabled(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling)
-                        .opacity(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling ? 0.6 : 1.0)
+                        .disabled(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling || !hasSufficientBalance)
+                        .opacity(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling || !hasSufficientBalance ? 0.6 : 1.0)
                     }
                 }
             }
@@ -239,6 +262,7 @@ struct ComposeCommentView: View {
             // Re-check identity configuration when settings sheet is dismissed
             Task {
                 await identityService.checkIdentityConfiguration()
+                await checkFunds()
             }
         }) {
             SettingsView()
@@ -249,10 +273,66 @@ struct ComposeCommentView: View {
             // Stop polling when view is dismissed
             pollingService.stopPolling()
         }
+        .onAppear {
+            Task { await checkFunds() }
+        }
     }
 }
 
 extension ComposeCommentView {
+    private func checkFunds() async {
+        guard identityService.isIdentityConfigured else { return }
+        do {
+            // Retrieve keys and derive app address
+            guard let identityAddress = try KeychainManager.retrieveIdentityAddress() else { return }
+            let privateKey = try KeychainManager.retrievePrivateKey()
+            let formattedPrivateKey = privateKey.hasPrefix("0x") ? privateKey : "0x\(privateKey)"
+            let ethereumPrivateKey = try EthereumPrivateKey(hexPrivateKey: formattedPrivateKey)
+            let appAddress = ethereumPrivateKey.address.hex(eip55: true)
+
+            // Build params with minimal content; gas does not depend on text size materially, but use current text
+            let parentId: Data? = parentComment != nil ? Data(hex: parentComment!.id) : nil
+            let params = CommentParams(
+                identityAddress: identityAddress,
+                appAddress: appAddress,
+                channelId: 0,
+                content: commentText.isEmpty ? "." : commentText,
+                targetUri: "",
+                parentId: parentId
+            )
+
+            // Estimate post cost
+            let result = try await commentsService.estimatePostCost(params: params, fromPrivateKey: privateKey)
+
+            // Fetch balance and compare
+            await balanceService.fetchBalance(for: appAddress)
+            hasSufficientBalance = isBalanceSufficient(balanceText: balanceService.balance, requiredWei: result.totalCost)
+        } catch {
+            // If estimation fails, keep post enabled; only disable when we know it's insufficient
+            print("⚠️ Failed to estimate post cost: \(error)")
+        }
+    }
+
+    private func isBalanceSufficient(balanceText: String, requiredWei: BigUInt) -> Bool {
+        guard let weiBalance = ethStringToWei(balanceText) else { return true }
+        return weiBalance >= requiredWei
+    }
+
+    private func ethStringToWei(_ text: String) -> BigUInt? {
+        // Expect formats like "0.123456 ETH" or "0.123456"
+        var cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleaned.hasSuffix(" ETH") {
+            cleaned = String(cleaned.dropLast(4))
+        }
+        guard let decimal = Decimal(string: cleaned) else { return nil }
+        let weiPerEth = Decimal(string: "1000000000000000000")! // 1e18
+        let weiDecimal = decimal * weiPerEth
+        // Round down to integer wei
+        var result = NSDecimalNumber(decimal: weiDecimal)
+        let handler = NSDecimalNumberHandler(roundingMode: .down, scale: 0, raiseOnExactness: false, raiseOnOverflow: false, raiseOnUnderflow: false, raiseOnDivideByZero: false)
+        result = result.rounding(accordingToBehavior: handler)
+        return BigUInt(result.stringValue, radix: 10)
+    }
     private func postComment() {
         isPosting = true
         errorMessage = nil
