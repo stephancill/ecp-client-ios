@@ -15,3 +15,20 @@ DerivedData/
 !default.mode1v3
 !default.mode2v3
 !default.perspectivev3
+
+# Xcode project user data
+*.xcuserdatad/
+*.xcuserstate
+*.xcuserdatad
+xcuserdata/
+project.xcworkspace/xcuserdata/
+
+# Xcode scheme management (user-specific)
+xcuserdata/*/xcschemes/xcschememanagement.plist
+
+# Xcode user interface state
+*.xcuserstate
+
+# Xcode project user data directories
+**/xcuserdata/
+**/project.xcworkspace/xcuserdata/
