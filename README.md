@@ -1,3 +1,130 @@
-# town - a new town square
+# town
 
-town is an ios app that lets you post comments to the Ethereum Comments Protocol.
+town is an ios app that lets you post comments to the ethereum comments protocol. join the testflight https://t.me/+xs2OaEu_928yZTI0
+
+## Stack
+
+A SwiftUI iOS app and Bun + Hono backend for the Ethereum Comments Protocol (ECP).
+
+- The iOS app lets you browse posts, compose replies, and receive push notifications for replies and reactions.
+- The backend provides SIWE auth, device registration, notification fanout via APNs, an on-chain listener, and background workers.
+
+## Repository structure
+
+- `ecp-client/` — iOS app (SwiftUI)
+  - `ecp-client.xcodeproj` — Xcode project
+  - `ecp-client/` — app source
+  - Key files:
+    - `ecp_clientApp.swift` — app entry; bootstraps auth, notifications, deep links
+    - `ContentView.swift` — main feed, compose FAB, settings & notifications sheets
+    - `ComposeCommentView.swift` — compose/reply UI, identity/approval checks, balance guard
+    - `NotificationsView.swift` — in-app notification center with grouping and deep links
+    - `AuthService.swift` — SIWE auth using app key; JWT stored in Keychain
+    - `NotificationService.swift` — permission flow, APNs registration, event history, unread badge
+    - `DeepLinkService.swift` — app routes and handling notification payloads & custom URLs
+    - `CommentsService.swift` — fetch main feed, pagination, pull-to-refresh
+    - `CommentManager.swift` — ECP contract structures and helpers (posting, approvals, gas est.)
+    - `WalletConfigurationService.swift` — CoinbaseWalletSDK host/callback configuration
+    - `AppConfiguration.swift` — reads `API_BASE_URL` from `Info.plist` or env
+- `api/` — Bun + Hono backend
+  - Hono HTTP server, Prisma/Postgres, BullMQ (Redis), APNs, on-chain listener
+  - See `api/README.md` for detailed setup and API reference
+
+## iOS app features
+
+- Feed and details
+  - Infinite scroll, pull-to-refresh, skeleton loading
+  - Comment rows with reactions and reply counts
+  - Detail sheets via deep link routing
+- Compose & reply
+  - Identity/approval checks with clear guidance when not configured
+  - Reply context preview; character count and validation
+  - Balance warning + quick link to settings
+- Notifications
+  - Foreground alert handling and unread badge
+  - In-app notification center: server-side history with pagination
+  - Reaction aggregation (e.g., “Alice and 3 others liked your post”), avatar rows
+  - Taps deep link to the relevant post or parent thread
+- Authentication
+  - SIWE: request nonce, sign message locally, verify, and store JWT in Keychain
+  - Auto re-auth on 401; token validation on launch
+- Push registration
+  - Permission prompts, Settings fallback, register/unregister current device
+  - Server status check (`/api/notifications/status`) and test send
+- Deep linking
+  - Custom scheme: `ecp-client://comment/<id>`
+  - Notification payload keys supported: `type` (`reply|reaction|mention|...`), `commentId`, `parentId`
+- Wallet config
+  - Configures `CoinbaseWalletSDK` host and callback URL; app restart if wallet host changes
+
+## Backend features (api/)
+
+- Auth (SIWE)
+  - Issue nonce, verify signature, set JWT cookie (`auth`), `/api/auth/me`
+  - JWT also accepted via `Authorization: Bearer <token>`
+- Notifications service
+  - Register/remove device tokens; list and status endpoints
+  - Send test notification; persist notification events for in-app feed
+  - APNs via token-based auth; invalid token cleanup
+- Background processing
+  - `comments` worker: reacts to on-chain comments, notifies parent on reply/reaction, mentions
+  - `notifications` worker: fans out to approved app accounts with registered devices
+  - On-chain listener watches `CommentManager` on Base and enqueues jobs
+- Data model (Prisma)
+  - `User` (id = app address), `NotificationDetails` (device tokens), `Approval` (author→app approvals)
+
+## Quick start
+
+### iOS app
+
+1. Open `ecp-client.xcodeproj` in Xcode (iOS 16+ recommended).
+2. Set API base URL:
+   - Add `API_BASE_URL` to `Info.plist` (e.g., `http://localhost:3000`).
+3. Build and run on a real device for push notifications.
+4. First launch:
+   - The app attempts SIWE auth using your stored app private key (see Settings/Keychain utilities in the app code).
+   - You may be prompted to enable notifications; device token is registered with the backend.
+
+Notes:
+
+- Push notifications require the backend running with valid APNs credentials.
+- For local device testing, ensure your phone can reach your machine (use LAN IP or a tunnel for `API_BASE_URL`).
+
+### API server
+
+See `api/README.md` for full details. Minimal steps:
+
+```sh
+cd api
+bun install
+# Optionally start Postgres and Redis
+docker compose up -d
+# Apply DB migrations
+bunx prisma migrate deploy
+# Run the server
+bun run dev
+# (opt) workers & listener in separate terminals
+bun run workers
+BASE_RPC_URL="https://base-mainnet.g.alchemy.com/v2/KEY" bun run listener
+```
+
+Environment variables (selection; see `api/README.md`):
+
+- `DATABASE_URL`, `REDIS_URL`, `REDIS_QUEUE_URL`, `JWT_SECRET`
+- `APNS_KEY` or `APNS_KEY_PATH`, `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID`
+- `NODE_ENV`, `BASE_RPC_URL`
+
+## Configuration reference
+
+- `AppConfiguration.swift` reads `API_BASE_URL` from `Info.plist` or process env and normalizes it.
+- `ecp_clientApp.swift` wires `AuthService`, `NotificationService`, `DeepLinkService`, and promotes deep links from notifications.
+- Foreground notifications are shown as banner/list/sound via `UNUserNotificationCenterDelegate`.
+
+## Contributing / Development
+
+- iOS: SwiftUI, `@StateObject` service pattern, modular views, skeletons, and haptics.
+- API: Hono routes under `api/src/routes`, Prisma client at `api/src/generated/prisma`, workers under `api/src/workers`.
+
+## License
+
+MIT
