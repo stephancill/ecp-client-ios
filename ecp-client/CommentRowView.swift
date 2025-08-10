@@ -89,34 +89,12 @@ struct CommentRowView: View {
                     showingUserDetailSheet = true
                 }) {
                     HStack {
-                        Group {
-                            if let imageUrl = comment.author.ens?.avatarUrl ?? comment.author.farcaster?.pfpUrl,
-                               !imageUrl.isEmpty {
-                                CachedAsyncImage(url: URL(string: imageUrl)) { phase in
-                                    switch phase {
-                                    case .success(let image):
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                            .frame(width: 40, height: 40)
-                                            .clipShape(Circle())
-                                    case .failure(_):
-                                        // Image failed to load, show blockies
-                                        BlockiesAvatarView(address: comment.author.address, size: 40)
-                                    case .empty:
-                                        // Loading state - show a simple placeholder
-                                        Circle()
-                                            .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 40, height: 40)
-                                    @unknown default:
-                                        BlockiesAvatarView(address: comment.author.address, size: 40)
-                                    }
-                                }
-                            } else {
-                                // No image URL available, show blockies immediately
-                                BlockiesAvatarView(address: comment.author.address, size: 40)
-                            }
-                        }
+                        AvatarView(
+                            address: comment.author.address,
+                            size: 40,
+                            ensAvatarUrl: comment.author.ens?.avatarUrl,
+                            farcasterPfpUrl: comment.author.farcaster?.pfpUrl
+                        )
                         
                         VStack(alignment: .leading, spacing: 0) {
                             Text(displayUsername)

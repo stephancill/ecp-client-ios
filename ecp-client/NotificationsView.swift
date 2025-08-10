@@ -112,9 +112,11 @@ struct NotificationsView: View {
                                 VStack(alignment: .leading, spacing: 6) {
                                     // User profile image above title
                                     if let actorProfile = event.actorProfile {
-                                        BlockiesAvatarView(
+                                        AvatarView(
                                             address: actorProfile.address,
-                                            size: 24
+                                            size: 24,
+                                            ensAvatarUrl: actorProfile.ens?.avatarUrl,
+                                            farcasterPfpUrl: actorProfile.farcaster?.pfpUrl
                                         )
                                     }
                                     
@@ -331,63 +333,6 @@ struct NotificationSkeletonRowView: View {
                 isAnimating = true
             }
         }
-    }
-}
-
-// MARK: - AvatarView
-struct AvatarView: View {
-    let profile: AuthorProfile?
-    var body: some View {
-        Group {
-            if let url = firstValidURL(from: profile) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image): image.resizable().scaledToFill()
-                    case .failure(_): Circle().fill(Color.gray.opacity(0.3))
-                    case .empty: Circle().fill(Color.gray.opacity(0.3))
-                    @unknown default: Circle().fill(Color.gray.opacity(0.3))
-                    }
-                }
-            } else {
-                Circle().fill(Color.gray.opacity(0.3))
-            }
-        }
-    }
-
-    private func firstValidURL(from profile: AuthorProfile?) -> URL? {
-        guard let profile = profile else { return nil }
-        let candidates = [profile.ens?.avatarUrl, profile.farcaster?.pfpUrl]
-            .compactMap { $0 }
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        for raw in candidates {
-            if let url = urlFrom(raw: raw) {
-                return url
-            }
-        }
-        return nil
-    }
-
-    private func urlFrom(raw: String) -> URL? {
-        let urlStr = normalizeURLString(raw)
-        if urlStr.lowercased().hasPrefix("data:image/") {
-            return nil
-        }
-        return URL(string: urlStr)
-    }
-
-    private func normalizeURLString(_ input: String) -> String {
-        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.lowercased().hasPrefix("ipfs://") {
-            let path = String(trimmed.dropFirst("ipfs://".count))
-            return "https://ipfs.io/ipfs/" + path.replacingOccurrences(of: "ipfs/", with: "")
-        }
-        if trimmed.lowercased().hasPrefix("ar://") {
-            let id = String(trimmed.dropFirst("ar://".count))
-            return "https://arweave.net/" + id
-        }
-        if trimmed.hasPrefix("//") { return "https:" + trimmed }
-        return trimmed
     }
 }
 
