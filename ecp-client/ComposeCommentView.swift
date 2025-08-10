@@ -20,6 +20,8 @@ struct ComposeCommentView: View {
     @StateObject private var pollingService = CommentPollingService()
     @StateObject private var balanceService = BalanceService()
     @State private var hasSufficientBalance: Bool = true
+    @State private var identityAddress: String? = nil
+    @State private var authorProfile: AuthorProfile? = nil
     @Environment(\.colorScheme) private var colorScheme
     
     let identityService: IdentityService
@@ -30,6 +32,13 @@ struct ComposeCommentView: View {
         self.identityService = identityService
         self.parentComment = parentComment
         self.onCommentPosted = onCommentPosted
+        // Seed identity address synchronously to avoid placeholder flash
+        if let addr = try? KeychainManager.retrieveIdentityAddress() {
+            self._identityAddress = State(initialValue: addr)
+            if let cached = AuthorProfileService.shared.cachedProfile(for: addr) {
+                self._authorProfile = State(initialValue: cached)
+            }
+        }
     }
     
     var body: some View {
@@ -158,14 +167,30 @@ struct ComposeCommentView: View {
                     
                     // Text Editor with Avatar
                     HStack(alignment: .top, spacing: 12) {
-                        // Placeholder Avatar
-                        Circle()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(width: 40, height: 40)
-                            .overlay(
-                                Image(systemName: "person.fill")
-                                    .foregroundColor(.gray)
-                            )
+                        if let addr = identityAddress {
+                            // Prefer cached/fetched profile; if none yet, show neutral placeholder to avoid blockies flash
+                            let cached = AuthorProfileService.shared.cachedProfile(for: addr)
+                            if let profile = (authorProfile ?? cached) {
+                                AvatarView(
+                                    address: addr,
+                                    size: 40,
+                                    ensAvatarUrl: profile.ens?.avatarUrl,
+                                    farcasterPfpUrl: profile.farcaster?.pfpUrl
+                                )
+                            } else {
+                                Circle()
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(width: 40, height: 40)
+                            }
+                        } else {
+                            Circle()
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(width: 40, height: 40)
+                                .overlay(
+                                    Image(systemName: "person.fill")
+                                        .foregroundColor(.gray)
+                                )
+                        }
                         
                         // Text Editor
                         ZStack(alignment: .topLeading) {
@@ -263,6 +288,7 @@ struct ComposeCommentView: View {
             Task {
                 await identityService.checkIdentityConfiguration()
                 await checkFunds()
+                await loadIdentityAndProfile()
             }
         }) {
             SettingsView()
@@ -274,12 +300,37 @@ struct ComposeCommentView: View {
             pollingService.stopPolling()
         }
         .onAppear {
-            Task { await checkFunds() }
+            Task {
+                await checkFunds()
+                await loadIdentityAndProfile()
+                // If identity already known, warm profile + image cache
+                if let addr = try? KeychainManager.retrieveIdentityAddress(),
+                   AuthorProfileService.shared.cachedProfile(for: addr) == nil {
+                    Task.detached { [addr] in _ = try? await AuthorProfileService.shared.fetch(address: addr) }
+                }
+            }
         }
     }
 }
 
 extension ComposeCommentView {
+    private func loadIdentityAndProfile() async {
+        do {
+            if let addr = try KeychainManager.retrieveIdentityAddress() {
+                await MainActor.run { self.identityAddress = addr }
+                do {
+                    let profile = try await AuthorProfileService.shared.fetch(address: addr)
+                    await MainActor.run { self.authorProfile = profile }
+                } catch {
+                    // Ignore profile errors, keep fallback avatar
+                }
+            } else {
+                await MainActor.run { self.identityAddress = nil; self.authorProfile = nil }
+            }
+        } catch {
+            await MainActor.run { self.identityAddress = nil; self.authorProfile = nil }
+        }
+    }
     private func checkFunds() async {
         guard identityService.isIdentityConfigured else { return }
         do {
