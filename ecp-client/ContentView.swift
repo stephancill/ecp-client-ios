@@ -121,7 +121,7 @@ struct ContentView: View {
                         ZStack(alignment: .topTrailing) {
                             Image(systemName: "bell")
                                 .font(.system(size: 18, weight: .medium))
-                            if true {
+                            if notificationService.hasUnread {
                                 Circle()
                                     .fill(Color.red)
                                     .frame(width: 8, height: 8)
