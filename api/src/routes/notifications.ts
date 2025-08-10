@@ -130,6 +130,7 @@ app.get(
         createdAt: any;
         actorProfile?: any;
         parentProfile?: any;
+        otherActorProfiles?: any[];
         targetCommentId?: string | null;
         parentCommentId?: string | null;
       };
@@ -253,6 +254,13 @@ app.get(
         const id = first.id;
         const createdAt = first.createdAt;
 
+        // Collect profiles for the first 10 other actors
+        const otherAddresses = uniqueActorAddresses.slice(1, 11);
+        const otherProfiles = otherAddresses
+          .map((addr) => profilesMap[addr as `0x${string}`])
+          .filter(Boolean)
+          .map((p) => toJsonSafe(p));
+
         const aggregatedEvent = {
           ...first,
           id,
@@ -262,6 +270,7 @@ app.get(
           actorProfile: firstActorProfile
             ? toJsonSafe(firstActorProfile)
             : first.actorProfile,
+          otherActorProfiles: otherProfiles,
           data: {
             ...(first.data || {}),
             actorAddresses: uniqueActorAddresses.slice(0, 6),

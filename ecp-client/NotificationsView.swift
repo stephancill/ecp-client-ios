@@ -110,16 +110,28 @@ struct NotificationsView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading, spacing: 6) {
-                                    // User profile image above title
-                                    if let actorProfile = event.actorProfile {
-                                        AvatarView(
-                                            address: actorProfile.address,
-                                            size: 24,
-                                            ensAvatarUrl: actorProfile.ens?.avatarUrl,
-                                            farcasterPfpUrl: actorProfile.farcaster?.pfpUrl
-                                        )
+                                    // Avatar row: primary + up to 10 others
+                                    HStack(spacing: 6) {
+                                        if let actorProfile = event.actorProfile {
+                                            AvatarView(
+                                                address: actorProfile.address,
+                                                size: 24,
+                                                ensAvatarUrl: actorProfile.ens?.avatarUrl,
+                                                farcasterPfpUrl: actorProfile.farcaster?.pfpUrl
+                                            )
+                                        }
+                                        if let others = event.otherActorProfiles {
+                                            ForEach(others.prefix(10), id: \.address) { p in
+                                                AvatarView(
+                                                    address: p.address,
+                                                    size: 24,
+                                                    ensAvatarUrl: p.ens?.avatarUrl,
+                                                    farcasterPfpUrl: p.farcaster?.pfpUrl
+                                                )
+                                            }
+                                        }
                                     }
-                                    
+
                                     Text(event.title)
                                         .font(.subheadline)
                                         .fontWeight(.medium)
