@@ -1,6 +1,6 @@
 # town
 
-town is an ios app that lets you post comments to the ethereum comments protocol. join the testflight https://t.me/+xs2OaEu_928yZTI0
+town is an iOS app that lets you post comments to the Ethereum Comments Protocol. Join the testflight https://t.me/+xs2OaEu_928yZTI0
 
 ## Stack
 
@@ -8,6 +8,87 @@ A SwiftUI iOS app and Bun + Hono backend for the Ethereum Comments Protocol (ECP
 
 - The iOS app lets you browse posts, compose replies, and receive push notifications for replies and reactions.
 - The backend provides SIWE auth, device registration, notification fanout via APNs, an on-chain listener, and background workers.
+
+## Quick Start
+
+### Prerequisites
+
+- Xcode 15.0+
+- iOS 17.0+
+- Apple Developer Account (for device testing)
+
+### Setup
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone <repository-url>
+   cd ecp-client
+   ```
+
+2. **Configure your development environment:**
+
+   - See [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) for personal configuration
+   - See [SECURITY_SETUP.md](SECURITY_SETUP.md) for security configuration
+
+3. **Open in Xcode:**
+   ```bash
+   open ecp-client.xcodeproj
+   ```
+
+## Security Setup
+
+### ⚠️ CRITICAL: Info.plist Configuration
+
+The `Info.plist` file contains sensitive configuration data and should **NEVER** be committed to git.
+
+### Quick Setup:
+
+1. **Copy the template file:**
+
+   ```bash
+   cp ecp-client/Info.plist.template ecp-client/Info.plist
+   ```
+
+2. **Configure your Pinata credentials:**
+
+   - Get your Pinata JWT token from [Pinata Dashboard](https://app.pinata.cloud/)
+   - Replace `YOUR_PINATA_JWT_TOKEN_HERE` with your actual JWT token
+   - Replace `YOUR_PINATA_GATEWAY_URL_HERE` with your gateway URL
+
+3. **Never commit Info.plist** - it's already in `.gitignore`
+
+### Security Notes:
+
+- **JWT tokens are sensitive credentials** - treat them like passwords
+- **Never share JWT tokens** in code, logs, or public repositories
+- **Revoke compromised tokens** immediately in your Pinata dashboard
+
+## Developer Setup
+
+### Personal Configuration
+
+This project uses a shared `project.pbxproj` file but allows developers to override specific settings using `UserConfig.xcconfig`.
+
+### Current Shared Settings:
+
+- **Bundle Identifier:** `co.za.stephancill.town`
+- **Development Team:** `6JKMV57Y77`
+
+### Setup Your Personal Settings:
+
+1. **Copy the template:**
+
+   ```bash
+   cp ecp-client/UserConfig.xcconfig.template ecp-client/UserConfig.xcconfig
+   ```
+
+2. **Edit UserConfig.xcconfig** with your personal values:
+
+   - `PRODUCT_BUNDLE_IDENTIFIER = com.yourname.town`
+   - `DEVELOPMENT_TEAM = YOUR_TEAM_ID_HERE`
+
+3. **Configure in Xcode** (see [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) for details)
 
 ## Repository structure
 
@@ -43,7 +124,7 @@ A SwiftUI iOS app and Bun + Hono backend for the Ethereum Comments Protocol (ECP
 - Notifications
   - Foreground alert handling and unread badge
   - In-app notification center: server-side history with pagination
-  - Reaction aggregation (e.g., “Alice and 3 others liked your post”), avatar rows
+  - Reaction aggregation (e.g., "Alice and 3 others liked your post"), avatar rows
   - Taps deep link to the relevant post or parent thread
   - Post subscriptions: enable notifications when a specific user posts (toggle via bell icon on their profile)
 - Authentication
@@ -76,24 +157,7 @@ A SwiftUI iOS app and Bun + Hono backend for the Ethereum Comments Protocol (ECP
   - `User` (id = app address), `NotificationDetails` (device tokens), `Approval` (author→app approvals)
   - `PostSubscription` (user→targetAuthor subscriptions for post notifications)
 
-## Quick start
-
-### iOS app
-
-1. Open `ecp-client.xcodeproj` in Xcode (iOS 16+ recommended).
-2. Set API base URL:
-   - Add `API_BASE_URL` to `Info.plist` (e.g., `http://localhost:3000`).
-3. Build and run on a real device for push notifications.
-4. First launch:
-   - The app attempts SIWE auth using your stored app private key (see Settings/Keychain utilities in the app code).
-   - You may be prompted to enable notifications; device token is registered with the backend.
-
-Notes:
-
-- Push notifications require the backend running with valid APNs credentials.
-- For local device testing, ensure your phone can reach your machine (use LAN IP or a tunnel for `API_BASE_URL`).
-
-### API server
+## API server
 
 See `api/README.md` for full details. Minimal steps:
 
@@ -127,6 +191,13 @@ Environment variables (selection; see `api/README.md`):
 
 - iOS: SwiftUI, `@StateObject` service pattern, modular views, skeletons, and haptics.
 - API: Hono routes under `api/src/routes`, Prisma client at `api/src/generated/prisma`, workers under `api/src/workers`.
+
+## Documentation
+
+- [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) - Detailed developer configuration
+- [SECURITY_SETUP.md](SECURITY_SETUP.md) - Security configuration and best practices
+- [SUPPORT.md](SUPPORT.md) - Support information
+- [PRIVACY.md](PRIVACY.md) - Privacy policy
 
 ## License
 
