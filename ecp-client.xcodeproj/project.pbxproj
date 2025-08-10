@@ -42,6 +42,7 @@
 		D4F388982E47F15A0019E0C0 /* ci_pre_xcodebuild.sh in Resources */ = {isa = PBXBuildFile; fileRef = D4F388972E47F15A0019E0C0 /* ci_pre_xcodebuild.sh */; };
 		D4F388992E47F15A0019E0C0 /* ci_post_xcodebuild.sh in Resources */ = {isa = PBXBuildFile; fileRef = D4F388962E47F15A0019E0C0 /* ci_post_xcodebuild.sh */; };
 		D4F3889C2E44D3E50019E0C0 /* DebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889B2E44D3E50019E0C0 /* DebugView.swift */; };
+		D4F3889D2E4912E10019E0C0 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889C2E4912E10019E0C0 /* AvatarView.swift */; };
 		D4FF6E4D2E4237C100A51874 /* CommentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4C2E4237C000A51874 /* CommentsService.swift */; };
 		D4FF6E4F2E4238C800A51874 /* ChannelsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */; };
 		D4FF6E512E424FC300A51874 /* ImageViewerModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */; };
@@ -83,6 +84,7 @@
 		D4F388972E44D1000019E0C0 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		D4F388972E47F15A0019E0C0 /* ci_pre_xcodebuild.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = ci_pre_xcodebuild.sh; sourceTree = "<group>"; };
 		D4F3889B2E44D3E50019E0C0 /* DebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugView.swift; sourceTree = "<group>"; };
+		D4F3889C2E4912E10019E0C0 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
 		D4FF6E4C2E4237C000A51874 /* CommentsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsService.swift; sourceTree = "<group>"; };
 		D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelsService.swift; sourceTree = "<group>"; };
 		D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewerModal.swift; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 				D4C7B2C52E3E9DD8002B087F /* CommentSkeletonView.swift */,
 				D4C7B2D82E3EAFD8002B087F /* KeychainManager.swift */,
 				D4BEED962E3F907100A45974 /* CommentManager.swift */,
+				D4F3889C2E4912E10019E0C0 /* AvatarView.swift */,
 				D4F3888F2E44CD390019E0C0 /* NotificationService.swift */,
 				D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */,
 				D4542E332E40AA46007F1A6C /* IdentityService.swift */,
@@ -282,6 +285,7 @@
 				D4C7B2BE2E3E3BA6002B087F /* Blockies.swift in Sources */,
 				D4C7B2C22E3E9DB5002B087F /* BlockiesAvatarView.swift in Sources */,
 				D4C7B2C02E3E67D9002B087F /* UserDetailView.swift in Sources */,
+				D4F3889D2E4912E10019E0C0 /* AvatarView.swift in Sources */,
 				D4FF6E4F2E4238C800A51874 /* ChannelsService.swift in Sources */,
 				D4BEED972E3F907100A45974 /* CommentManager.swift in Sources */,
 				D4C7B2C42E3E9DBB002B087F /* ContentParser.swift in Sources */,

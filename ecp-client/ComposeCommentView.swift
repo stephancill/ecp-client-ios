@@ -98,44 +98,33 @@ struct ComposeCommentView: View {
                             }
                             
                             HStack(alignment: .top, spacing: 8) {
-                                // Parent comment avatar
-                                if let farcaster = parentComment.author.farcaster {
-                                    CachedAsyncImage(url: URL(string: farcaster.pfpUrl ?? "")) { image in
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                    } placeholder: {
-                                        BlockiesAvatarView(address: parentComment.author.address, size: 24)
-                                    }
-                                    .frame(width: 24, height: 24)
-                                    .clipShape(Circle())
-                                } else {
-                                    BlockiesAvatarView(address: parentComment.author.address, size: 24)
-                                }
-                                
+                                // Parent comment avatar (unified)
+                                AvatarView(
+                                    address: parentComment.author.address,
+                                    size: 24,
+                                    ensAvatarUrl: parentComment.author.ens?.avatarUrl,
+                                    farcasterPfpUrl: parentComment.author.farcaster?.pfpUrl
+                                )
+
                                 VStack(alignment: .leading, spacing: 2) {
-                                    // Author name
-                                    if let farcaster = parentComment.author.farcaster {
-                                        Text("@\(farcaster.username)")
-                                            .font(.caption)
-                                            .fontWeight(.medium)
-                                    } else if let ens = parentComment.author.ens {
-                                        Text(ens.name)
-                                            .font(.caption)
-                                            .fontWeight(.medium)
-                                    } else {
-                                        Text(Utils.truncateAddress(parentComment.author.address))
-                                            .font(.caption)
-                                            .fontWeight(.medium)
-                                    }
-                                    
+                                    // Author name (unified)
+                                    Text(
+                                        Utils.displayName(
+                                            ensName: parentComment.author.ens?.name,
+                                            farcasterUsername: parentComment.author.farcaster?.username,
+                                            fallbackAddress: parentComment.author.address
+                                        )
+                                    )
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+
                                     // Parent comment content (truncated)
                                     Text(parentComment.content)
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                         .lineLimit(2)
                                 }
-                                
+
                                 Spacer()
                             }
                         }
