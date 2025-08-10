@@ -31,18 +31,16 @@ A SwiftUI iOS app and Bun + Hono backend for the Ethereum Comments Protocol (ECP
    - See [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) for personal configuration
    - See [SECURITY_SETUP.md](SECURITY_SETUP.md) for security configuration
 
-3. **Open in Xcode:**
+3. **Build with personal configuration:**
    ```bash
+   # Use the build script for personal development
+   ./build-personal.sh
+   
+   # Or open in Xcode (may require manual configuration)
    open ecp-client.xcodeproj
    ```
 
-## Security Setup
-
-### ⚠️ CRITICAL: Info.plist Configuration
-
-The `Info.plist` file contains sensitive configuration data and should **NEVER** be committed to git.
-
-### Quick Setup:
+## Environment variables setup
 
 1. **Copy the template file:**
 
@@ -55,14 +53,6 @@ The `Info.plist` file contains sensitive configuration data and should **NEVER**
    - Get your Pinata JWT token from [Pinata Dashboard](https://app.pinata.cloud/)
    - Replace `YOUR_PINATA_JWT_TOKEN_HERE` with your actual JWT token
    - Replace `YOUR_PINATA_GATEWAY_URL_HERE` with your gateway URL
-
-3. **Never commit Info.plist** - it's already in `.gitignore`
-
-### Security Notes:
-
-- **JWT tokens are sensitive credentials** - treat them like passwords
-- **Never share JWT tokens** in code, logs, or public repositories
-- **Revoke compromised tokens** immediately in your Pinata dashboard
 
 ## Developer Setup
 
@@ -88,7 +78,14 @@ This project uses a shared `project.pbxproj` file but allows developers to overr
    - `PRODUCT_BUNDLE_IDENTIFIER = com.yourname.town`
    - `DEVELOPMENT_TEAM = YOUR_TEAM_ID_HERE`
 
-3. **Configure in Xcode** (see [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) for details)
+3. **Configure in Xcode**
+
+4. **Open the project in Xcode**
+5. **Select the project** in the navigator
+6. **Select the "ecp-client" target**
+7. **Go to "Build Settings" tab**
+8. **Click the "+" button** → "Add User-Defined Setting"
+9. **Add:** `xcconfig` with value: `UserConfig.xcconfig`
 
 ## Repository structure
 
@@ -194,8 +191,6 @@ Environment variables (selection; see `api/README.md`):
 
 ## Documentation
 
-- [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) - Detailed developer configuration
-- [SECURITY_SETUP.md](SECURITY_SETUP.md) - Security configuration and best practices
 - [SUPPORT.md](SUPPORT.md) - Support information
 - [PRIVACY.md](PRIVACY.md) - Privacy policy
 

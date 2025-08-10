@@ -184,8 +184,6 @@
 		D4F388952E47F0BB0019E0C0 /* ci_scripts */ = {
 			isa = PBXGroup;
 			children = (
-				D4F388962E47F15A0019E0C0 /* ci_post_xcodebuild.sh */,
-				D4F388972E47F15A0019E0C0 /* ci_pre_xcodebuild.sh */,
 			);
 			path = ci_scripts;
 			sourceTree = "<group>";
@@ -262,8 +260,6 @@
 			files = (
 				D4C7B2AF2E3E205C002B087F /* Preview Assets.xcassets in Resources */,
 				D4C7B2AC2E3E205C002B087F /* Assets.xcassets in Resources */,
-				D4F388982E47F15A0019E0C0 /* ci_pre_xcodebuild.sh in Resources */,
-				D4F388992E47F15A0019E0C0 /* ci_post_xcodebuild.sh in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -443,7 +439,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"ecp-client/Preview Content\"";
-				DEVELOPMENT_TEAM = 6JKMV57Y77;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ecp-client/Info.plist";
@@ -460,7 +455,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.za.stephancill.town;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -469,6 +463,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				xcconfig = "ecp-client/UserConfig.xcconfig";
 			};
 			name = Debug;
 		};
@@ -481,7 +476,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"ecp-client/Preview Content\"";
-				DEVELOPMENT_TEAM = 6JKMV57Y77;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ecp-client/Info.plist";
@@ -498,7 +492,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.za.stephancill.town;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -507,6 +500,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				xcconfig = "ecp-client/UserConfig.xcconfig";
 			};
 			name = Release;
 		};
