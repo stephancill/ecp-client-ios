@@ -1,0 +1,6 @@
+// User-specific configuration template
+// Copy this file to UserConfig.xcconfig and modify for your development environment
+// This file should NOT be committed to git
+
+PRODUCT_BUNDLE_IDENTIFIER = com.yourname.town
+DEVELOPMENT_TEAM = YOUR_TEAM_ID_HERE
