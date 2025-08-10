@@ -20,45 +20,22 @@ struct NotificationsView: View {
         List {
             // Permission banner
             if !notificationService.isRegistered {
-                HStack(alignment: .center, spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.blue.opacity(0.15))
-                            .frame(width: 36, height: 36)
-                        Image(systemName: "bell.badge.fill")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 16, weight: .semibold))
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Notifications are off")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        Text("Enable push notifications to get replies and mentions.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-
-                    Spacer(minLength: 8)
-
-                    Button(action: {
+                InfoBannerView(
+                    iconSystemName: "bell.badge.fill",
+                    iconBackgroundColor: Color.blue.opacity(0.15),
+                    iconForegroundColor: .blue,
+                    title: "Notifications are off",
+                    subtitle: "Enable push notifications to get replies and mentions.",
+                    buttonTitle: "Enable",
+                    buttonAction: {
                         let impact = UIImpactFeedbackGenerator(style: .light)
                         impact.impactOccurred()
                         Task {
                             await notificationService.requestNotificationPermissions()
                             await notificationService.checkNotificationStatus()
                         }
-                    }) {
-                        Text("Enable")
-                            .font(.system(.footnote, weight: .semibold))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
-                }
-                .padding(12)
+                )
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.blue.opacity(0.08))
