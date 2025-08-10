@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_BASE_URL</key>
+	<string>https://town.steer.fun</string>
+	<key>PINATA_JWT</key>
+	<string>YOUR_PINATA_JWT_TOKEN_HERE</string>
+	<key>PINATA_GATEWAY_URL</key>
+	<string>YOUR_PINATA_GATEWAY_URL_HERE</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLIconFile</key>
+			<string>ecp-client</string>
+			<key>CFBundleURLName</key>
+			<string>ecp-client</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>ecp-client</string>
+			</array>
+		</dict>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+</dict>
+</plist>

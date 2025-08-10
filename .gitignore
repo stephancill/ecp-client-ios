@@ -32,3 +32,6 @@ xcuserdata/*/xcschemes/xcschememanagement.plist
 # Xcode project user data directories
 **/xcuserdata/
 **/project.xcworkspace/xcuserdata/
+
+# iOS App Configuration (contains secrets)
+Info.plist
