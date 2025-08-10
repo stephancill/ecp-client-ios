@@ -19,6 +19,7 @@ struct ContentView: View {
     @State private var showingSettingsModal = false
     @State private var showingNotificationsModal = false
     @State private var currentUserAddress: String?
+    @StateObject private var authorProfileService = AuthorProfileService.shared
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var deepLinkService: DeepLinkService
     @State private var presentedDetailRoute: DeepLinkService.Route?
@@ -210,6 +211,12 @@ struct ContentView: View {
             // Check identity configuration
             Task {
                 await identityService.checkIdentityConfiguration()
+                // Warm avatar cache for current user
+                if let addr = currentUserAddress, authorProfileService.cachedProfile(for: addr) == nil {
+                    Task.detached { [addr] in
+                        _ = try? await AuthorProfileService.shared.fetch(address: addr)
+                    }
+                }
             }
         }
         .sheet(item: $presentedDetailRoute) { route in
