@@ -35,3 +35,4 @@ xcuserdata/*/xcschemes/xcschememanagement.plist
 
 # iOS App Configuration (contains secrets)
 Info.plist
+UserConfig.xcconfig
