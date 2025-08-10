@@ -11,6 +11,8 @@ struct AppConfiguration {
     static let shared = AppConfiguration()
 
     let baseURL: String
+    let pinataJWT: String
+    let pinataGatewayURL: String
 
     private init() {
         // Priority: Info.plist -> process env (useful for previews/tests) -> safe default
@@ -22,6 +24,28 @@ struct AppConfiguration {
             baseURL = AppConfiguration.normalizeBaseURL(envValue)
         } else {
             baseURL = AppConfiguration.normalizeBaseURL("https://example.com")
+        }
+        
+        // Pinata JWT
+        if let plistValue = Bundle.main.object(forInfoDictionaryKey: "PINATA_JWT") as? String,
+           plistValue.isEmpty == false {
+            pinataJWT = plistValue
+        } else if let envValue = ProcessInfo.processInfo.environment["PINATA_JWT"],
+                  envValue.isEmpty == false {
+            pinataJWT = envValue
+        } else {
+            pinataJWT = ""
+        }
+        
+        // Pinata Gateway URL
+        if let plistValue = Bundle.main.object(forInfoDictionaryKey: "PINATA_GATEWAY_URL") as? String,
+           plistValue.isEmpty == false {
+            pinataGatewayURL = plistValue
+        } else if let envValue = ProcessInfo.processInfo.environment["PINATA_GATEWAY_URL"],
+                  envValue.isEmpty == false {
+            pinataGatewayURL = envValue
+        } else {
+            pinataGatewayURL = ""
         }
     }
 
