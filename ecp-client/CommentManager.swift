@@ -16,7 +16,7 @@ import Web3ContractABI
 public struct CommentParams {
     public let identityAddress: String
     public let appAddress: String
-    public let channelId: UInt64
+    public let channelId: BigUInt
     public let content: String
     public let targetUri: String
     public let deadline: TimeInterval
@@ -26,7 +26,7 @@ public struct CommentParams {
     public init(
         identityAddress: String,
         appAddress: String,
-        channelId: UInt64 = 0,
+        channelId: BigUInt = 0,
         content: String,
         targetUri: String = "",
         deadline: TimeInterval? = nil,
@@ -319,17 +319,31 @@ public class CommentsContractService: ObservableObject {
     // MARK: - Gas Estimation
     
     /// Estimate gas for a transaction
-    private func estimateGas(for invocation: SolidityInvocation, from address: EthereumAddress) async throws -> EthereumQuantity {
+    private func estimateGas(for invocation: SolidityInvocation, from address: EthereumAddress, value: EthereumQuantity? = nil) async throws -> EthereumQuantity {
         return try await withCheckedThrowingContinuation { continuation in
-            invocation.estimateGas(from: address) { result, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                } else if let gasEstimate = result {
-                    // Add 20% buffer for safety
-                    let gasWithBuffer = gasEstimate.quantity * 120 / 100
-                    continuation.resume(returning: EthereumQuantity(quantity: gasWithBuffer))
-                } else {
-                    continuation.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to estimate gas"]))
+            if let value = value {
+                invocation.estimateGas(from: address, value: value) { result, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else if let gasEstimate = result {
+                        // Add 20% buffer for safety
+                        let gasWithBuffer = gasEstimate.quantity * 120 / 100
+                        continuation.resume(returning: EthereumQuantity(quantity: gasWithBuffer))
+                    } else {
+                        continuation.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to estimate gas"]))
+                    }
+                }
+            } else {
+                invocation.estimateGas(from: address) { result, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else if let gasEstimate = result {
+                        // Add 20% buffer for safety
+                        let gasWithBuffer = gasEstimate.quantity * 120 / 100
+                        continuation.resume(returning: EthereumQuantity(quantity: gasWithBuffer))
+                    } else {
+                        continuation.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to estimate gas"]))
+                    }
                 }
             }
         }
@@ -399,7 +413,8 @@ public class CommentsContractService: ObservableObject {
     public func postComment(
         params: CommentParams,
         appSignature: Data,
-        privateKey: String
+        privateKey: String,
+        valueWei: BigUInt? = nil
     ) async throws -> String {
         
         let identityAddr = try EthereumAddress(hex: params.identityAddress, eip55: false)
@@ -411,7 +426,7 @@ public class CommentsContractService: ObservableObject {
         let commentData = CreateComment(
             author: identityAddr,
             app: appAddr,
-            channelId: BigUInt(integerLiteral: params.channelId),
+            channelId: params.channelId,
             deadline: commentDeadline,
             parentId: parentId,
             commentType: 0,
@@ -461,10 +476,14 @@ public class CommentsContractService: ObservableObject {
             appSignature: appSignature
         )
         
-        // Estimate gas for the transaction
-        let estimatedGas = try await estimateGas(for: invocation, from: ethPrivateKey.address)
-        print("🔧 Estimated gas: \(estimatedGas)")
-        
+        // Value to attach for payable fee (if any)
+        let txValue: EthereumQuantity = EthereumQuantity(quantity: valueWei ?? 0)
+        print("🔎 [PostComment] valueWei=\(String(describing: valueWei)) -> txValue=\(txValue.quantity)")
+
+        // Estimate gas for the transaction (ensure value is considered)
+        let estimatedGas = try await estimateGas(for: invocation, from: ethPrivateKey.address, value: txValue)
+        print("🔧 Estimated gas (with value): \(estimatedGas)")
+
         let transaction = invocation.createTransaction(
             nonce: nonce,
             gasPrice: gasPrice,
@@ -472,7 +491,7 @@ public class CommentsContractService: ObservableObject {
             maxPriorityFeePerGas: nil,
             gasLimit: estimatedGas,
             from: ethPrivateKey.address,
-            value: 0,
+            value: txValue,
             accessList: [:],
             transactionType: .legacy
         )
@@ -483,24 +502,119 @@ public class CommentsContractService: ObservableObject {
         
         let txHash: EthereumData = try await withCheckedThrowingContinuation { continuation in
             do {
+                print("🔎 [PostComment] sending raw tx with value=\(txValue.quantity) gasPrice=\(gasPrice.quantity) nonce=\(nonce.quantity)")
                 try web3.eth.sendRawTransaction(transaction: signedTransaction) { response in
                     switch response.status {
                     case .success:
                         if let hash = response.result {
+                            print("✅ [PostComment] tx sent hash=\(hash.hex())")
                             continuation.resume(returning: hash)
                         } else {
                             continuation.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "No transaction hash returned"]))
                         }
                     case .failure(let error):
+                        print("❌ [PostComment] sendRawTransaction error: \(error)")
                         continuation.resume(throwing: error)
                     }
                 }
             } catch {
+                print("❌ [PostComment] exception before send: \(error)")
                 continuation.resume(throwing: error)
             }
         }
         
         return txHash.hex()
+    }
+
+    // MARK: - Estimation Helpers
+
+    /// Estimates the total wei required to post a comment, including gas and the channel fee value
+    /// - Parameters:
+    ///   - params: Comment parameters (content, channelId, etc.)
+    ///   - appSignature: Optional app signature to improve gas estimation accuracy. If nil, a fallback gas limit will be used on estimation failure.
+    ///   - privateKey: App's private key used to derive the sender address for gas estimation and to query balance
+    ///   - valueWei: Optional value (channel fee) to attach
+    /// - Returns: Tuple containing (requiredWei, gasLimit, gasPrice, balanceWei)
+    public func estimatePostCost(
+        params: CommentParams,
+        appSignature: Data? = nil,
+        privateKey: String,
+        valueWei: BigUInt? = nil
+    ) async -> (requiredWei: BigUInt, gasLimit: EthereumQuantity, gasPrice: EthereumQuantity, balanceWei: BigUInt)? {
+        do {
+            let appEthKey = try EthereumPrivateKey(hexPrivateKey: privateKey.hasPrefix("0x") ? privateKey : "0x\(privateKey)")
+            let identityAddr = try EthereumAddress(hex: params.identityAddress, eip55: false)
+            let appAddr = appEthKey.address
+
+            // Build comment data
+            let commentDeadline = BigUInt(params.deadline)
+            let parentId = params.parentId ?? Data(count: 32)
+            let commentData = CreateComment(
+                author: identityAddr,
+                app: appAddr,
+                channelId: params.channelId,
+                deadline: commentDeadline,
+                parentId: parentId,
+                commentType: 0,
+                content: params.content,
+                metadata: params.metadata,
+                targetUri: params.targetUri
+            )
+
+            // Invocation using optional app signature (fallback to empty if nil)
+            let invocation = contract.postCommentWithSig(
+                commentData: commentData,
+                authorSignature: Data(count: 32),
+                appSignature: appSignature ?? Data(count: 65)
+            )
+
+            // Gas price
+            let gasPrice: EthereumQuantity = try await withCheckedThrowingContinuation { cont in
+                web3.eth.gasPrice { response in
+                    switch response.status {
+                    case .success:
+                        if let price = response.result { cont.resume(returning: price) } else {
+                            cont.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "No gas price returned"]))
+                        }
+                    case .failure(let error):
+                        cont.resume(throwing: error)
+                    }
+                }
+            }
+
+            // Gas limit with fallback (consider value for estimation)
+            let gasLimit: EthereumQuantity
+            do {
+                let valueQty = EthereumQuantity(quantity: valueWei ?? 0)
+                gasLimit = try await estimateGas(for: invocation, from: appAddr, value: valueQty)
+            } catch {
+                // Fallback to a conservative gas limit if estimation fails
+                let fallback: BigUInt = 250_000
+                gasLimit = EthereumQuantity(quantity: fallback)
+            }
+
+            // Sender balance
+            let balanceWei: BigUInt = try await withCheckedThrowingContinuation { cont in
+                web3.eth.getBalance(address: appAddr, block: .latest) { response in
+                    switch response.status {
+                    case .success:
+                        if let bal = response.result?.quantity { cont.resume(returning: bal) } else {
+                            cont.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "No balance returned"]))
+                        }
+                    case .failure(let error):
+                        cont.resume(throwing: error)
+                    }
+                }
+            }
+
+            // Total required wei = value + gasPrice * gasLimit
+            let value = valueWei ?? 0
+            let required = value + (gasPrice.quantity * gasLimit.quantity)
+            return (requiredWei: required, gasLimit: gasLimit, gasPrice: gasPrice, balanceWei: balanceWei)
+        } catch {
+            print("❌ [EstimatePostCost] failed: \(error)")
+            return nil
+        }
     }
     
     public func getCommentId(params: CommentParams) async throws -> String {
@@ -514,7 +628,7 @@ public class CommentsContractService: ObservableObject {
         let commentData = CreateComment(
             author: identityAddr,
             app: appAddr,
-            channelId: BigUInt(integerLiteral: params.channelId),
+            channelId: params.channelId,
             deadline: commentDeadline,
             parentId: commentParentId,
             commentType: 0, // Standard comment type

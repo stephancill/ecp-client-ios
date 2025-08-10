@@ -175,7 +175,8 @@ struct ContentView: View {
                     Task {
                         await commentsService.refreshComments()
                     }
-                }
+                },
+                channelsService: channelsService
             )
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
