@@ -84,9 +84,13 @@ app.get(
         },
       });
 
+      // Restrict grouping to the current response window; paginate using raw items
+      const pageWindow = found.slice(0, take);
+      const hasMoreRaw = found.length > take;
+
       // Enrich with cached user profiles for actor and parent if present
       const authorAddresses = new Set<string>();
-      for (const ev of found) {
+      for (const ev of pageWindow) {
         const data: any = ev.data || {};
         const actor =
           (typeof ev.originAddress === "string" && ev.originAddress) ||
@@ -114,7 +118,23 @@ app.get(
           )
         );
 
-      const enriched = found.map((ev) => {
+      type EnrichedEvent = ReturnType<typeof toJsonSafe> & {
+        id: string;
+        type: string | null;
+        originAddress: string | null;
+        reactionType: string | null;
+        groupKey: string | null;
+        title: string;
+        body: string;
+        data?: any;
+        createdAt: any;
+        actorProfile?: any;
+        parentProfile?: any;
+        targetCommentId?: string | null;
+        parentCommentId?: string | null;
+      };
+
+      const enriched: EnrichedEvent[] = pageWindow.map((ev) => {
         const data: any = ev.data || {};
         const actorAddress =
           (typeof ev.originAddress === "string" && isAddress(ev.originAddress)
@@ -135,7 +155,7 @@ app.get(
           | `0x${string}`
           | undefined;
         return {
-          ...ev,
+          ...(ev as any),
           actorProfile: actorKey
             ? toJsonSafe(profilesMap[actorKey])
             : undefined,
@@ -145,9 +165,126 @@ app.get(
         } as any;
       });
 
-      const hasMore = enriched.length > take;
-      const events = hasMore ? enriched.slice(0, take) : enriched;
-      const nextCursor = hasMore ? events[events.length - 1]?.id ?? null : null;
+      // Group reaction events by groupKey and modify the TITLE to include aggregation
+      // Body should become the post content (parent/target comment body)
+      const isReaction = (e: EnrichedEvent) =>
+        (e.type || "") === "reaction" && !!e.groupKey;
+
+      const displayNameFromProfile = (
+        profile: any,
+        fallbackAddress?: string | null
+      ): string => {
+        const ensName = profile?.ens?.name;
+        const fcUsername = profile?.farcaster?.username;
+        if (typeof ensName === "string" && ensName.length > 0) return ensName;
+        if (typeof fcUsername === "string" && fcUsername.length > 0)
+          return fcUsername;
+        const addr = (fallbackAddress || "").toString();
+        return addr && addr.startsWith("0x") && addr.length > 10
+          ? `${addr.slice(0, 6)}...${addr.slice(-4)}`
+          : addr || "Someone";
+      };
+
+      // Build groups while preserving the position of the first occurrence
+      const groupMap = new Map<
+        string,
+        {
+          indices: number[];
+          events: EnrichedEvent[];
+        }
+      >();
+      const passthrough: { index: number; event: EnrichedEvent }[] = [];
+
+      enriched.forEach((ev, idx) => {
+        if (isReaction(ev)) {
+          const key = ev.groupKey as string;
+          const g = groupMap.get(key) || { indices: [], events: [] };
+          g.indices.push(idx);
+          g.events.push(ev);
+          groupMap.set(key, g);
+        } else {
+          passthrough.push({ index: idx, event: ev });
+        }
+      });
+
+      // Create aggregated events for each group at the position of the first occurrence
+      const aggregated: { index: number; event: any }[] = [];
+      groupMap.forEach((g, key) => {
+        const sorted = g.events;
+        const first = sorted[0];
+
+        // Unique actor addresses for this group (up to 6 for avatars)
+        const uniqueActorAddresses: string[] = [];
+        for (const e of sorted) {
+          const addr =
+            (e.originAddress &&
+              isAddress(e.originAddress) &&
+              e.originAddress.toLowerCase()) ||
+            (e.data?.actorAddress &&
+              isAddress(e.data.actorAddress) &&
+              e.data.actorAddress.toLowerCase()) ||
+            undefined;
+          if (addr && !uniqueActorAddresses.includes(addr)) {
+            uniqueActorAddresses.push(addr);
+          }
+        }
+
+        const firstActorAddress =
+          uniqueActorAddresses[0] || first.originAddress || null;
+        const firstActorProfile = firstActorAddress
+          ? (profilesMap[firstActorAddress as `0x${string}`] as any)
+          : undefined;
+        const actorDisplay = displayNameFromProfile(
+          firstActorProfile,
+          firstActorAddress
+        );
+
+        const othersCount = Math.max(0, uniqueActorAddresses.length - 1);
+        const rt = (first.reactionType || "reaction").toLowerCase();
+        const verb = rt === "like" ? "liked" : "reacted to";
+        const title =
+          othersCount > 0
+            ? `${actorDisplay} and ${othersCount} other${
+                othersCount > 1 ? "s" : ""
+              } ${verb} your post`
+            : `${actorDisplay} ${verb} your post`;
+
+        const body = first.body;
+        const id = first.id;
+        const createdAt = first.createdAt;
+
+        const aggregatedEvent = {
+          ...first,
+          id,
+          createdAt,
+          title,
+          body,
+          actorProfile: firstActorProfile
+            ? toJsonSafe(firstActorProfile)
+            : first.actorProfile,
+          data: {
+            ...(first.data || {}),
+            actorAddresses: uniqueActorAddresses.slice(0, 6),
+            actorCount: uniqueActorAddresses.length,
+          },
+        } as any;
+
+        aggregated.push({
+          index: Math.min(...g.indices),
+          event: aggregatedEvent,
+        });
+      });
+
+      // Combine passthrough and aggregated, then sort by original index to maintain order
+      const combined = [...passthrough, ...aggregated]
+        .sort((a, b) => a.index - b.index)
+        .map((x) => x.event);
+
+      // Pagination is based on raw window, not grouped size
+      const events = combined;
+      const nextCursor = hasMoreRaw
+        ? pageWindow[pageWindow.length - 1]?.id ?? null
+        : null;
 
       return c.json({ success: true, events, nextCursor });
     } catch (error) {
