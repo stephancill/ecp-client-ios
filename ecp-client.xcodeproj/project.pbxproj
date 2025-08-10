@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		19E006832E47EF2900C1E773 /* ImageUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19E006822E47EF2900C1E773 /* ImageUploadService.swift */; };
 		D4542E342E40AA47007F1A6C /* IdentityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4542E332E40AA46007F1A6C /* IdentityService.swift */; };
 		D4AAAAAA2E99999900A00000 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4AAAAA92E99999900A00000 /* NotificationsView.swift */; };
 		D4AAAAB02E99999900A00003 /* DeepLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4AAAAB12E99999900A00004 /* DeepLinkService.swift */; };
@@ -39,8 +40,6 @@
 		D4F388922E44CD420019E0C0 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388912E44CD420019E0C0 /* APIService.swift */; };
 		D4F388942E44CD640019E0C0 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388932E44CD640019E0C0 /* AuthService.swift */; };
 		D4F388982E44D1000019E0C0 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388972E44D1000019E0C0 /* AppConfiguration.swift */; };
-		D4F388982E47F15A0019E0C0 /* ci_pre_xcodebuild.sh in Resources */ = {isa = PBXBuildFile; fileRef = D4F388972E47F15A0019E0C0 /* ci_pre_xcodebuild.sh */; };
-		D4F388992E47F15A0019E0C0 /* ci_post_xcodebuild.sh in Resources */ = {isa = PBXBuildFile; fileRef = D4F388962E47F15A0019E0C0 /* ci_post_xcodebuild.sh */; };
 		D4F3889C2E44D3E50019E0C0 /* DebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889B2E44D3E50019E0C0 /* DebugView.swift */; };
 		D4F3889D2E4912E10019E0C0 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889C2E4912E10019E0C0 /* AvatarView.swift */; };
 		D4F3889F2E491F360019E0C0 /* InfoBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889E2E491F360019E0C0 /* InfoBannerView.swift */; };
@@ -53,6 +52,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		19E006822E47EF2900C1E773 /* ImageUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUploadService.swift; sourceTree = "<group>"; };
 		D4542E332E40AA46007F1A6C /* IdentityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityService.swift; sourceTree = "<group>"; };
 		D4AAAAA92E99999900A00000 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		D4AAAAB12E99999900A00004 /* DeepLinkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkService.swift; sourceTree = "<group>"; };
@@ -83,9 +83,7 @@
 		D4F3888F2E44CD390019E0C0 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		D4F388912E44CD420019E0C0 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		D4F388932E44CD640019E0C0 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
-		D4F388962E47F15A0019E0C0 /* ci_post_xcodebuild.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = ci_post_xcodebuild.sh; sourceTree = "<group>"; };
 		D4F388972E44D1000019E0C0 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
-		D4F388972E47F15A0019E0C0 /* ci_pre_xcodebuild.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = ci_pre_xcodebuild.sh; sourceTree = "<group>"; };
 		D4F3889B2E44D3E50019E0C0 /* DebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugView.swift; sourceTree = "<group>"; };
 		D4F3889C2E4912E10019E0C0 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
 		D4F3889E2E491F360019E0C0 /* InfoBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoBannerView.swift; sourceTree = "<group>"; };
@@ -132,6 +130,7 @@
 		D4C7B2A62E3E205A002B087F /* ecp-client */ = {
 			isa = PBXGroup;
 			children = (
+				19E006822E47EF2900C1E773 /* ImageUploadService.swift */,
 				D4F388972E44D1000019E0C0 /* AppConfiguration.swift */,
 				D4F3889B2E44D3E50019E0C0 /* DebugView.swift */,
 				D4F3888E2E44C4840019E0C0 /* ecp-client.entitlements */,
@@ -283,6 +282,7 @@
 				D4F3888D2E437A5C0019E0C0 /* ParsedContentView.swift in Sources */,
 				D4BEED992E3FB10400A45974 /* CommentPollingService.swift in Sources */,
 				D4C7B2A82E3E205A002B087F /* ecp_clientApp.swift in Sources */,
+				19E006832E47EF2900C1E773 /* ImageUploadService.swift in Sources */,
 				D4C7B2CB2E3E9DD8002B087F /* CommentSkeletonView.swift in Sources */,
 				D4F388942E44CD640019E0C0 /* AuthService.swift in Sources */,
 				D4F388A12E4923080019E0C0 /* AuthorProfileService.swift in Sources */,
@@ -443,7 +443,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"ecp-client/Preview Content\"";
-				DEVELOPMENT_TEAM = 6JKMV57Y77;
+				DEVELOPMENT_TEAM = PMVY3QQJB8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ecp-client/Info.plist";
@@ -460,7 +460,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.za.stephancill.town;
+				PRODUCT_BUNDLE_IDENTIFIER = co.za.discovexyz.town;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -481,7 +481,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"ecp-client/Preview Content\"";
-				DEVELOPMENT_TEAM = 6JKMV57Y77;
+				DEVELOPMENT_TEAM = PMVY3QQJB8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ecp-client/Info.plist";
@@ -498,7 +498,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.za.stephancill.town;
+				PRODUCT_BUNDLE_IDENTIFIER = co.za.discovexyz.town;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;

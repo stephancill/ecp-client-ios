@@ -9,6 +9,10 @@ import SwiftUI
 import Web3
 import CachedAsyncImage
 import BigInt
+import PhotosUI
+
+// MARK: - Constants
+private let maxImages = 5
 
 struct ComposeCommentView: View {
     @Environment(\.dismiss) private var dismiss
@@ -16,9 +20,12 @@ struct ComposeCommentView: View {
     @State private var isPosting = false
     @State private var errorMessage: String?
     @State private var showingSettings = false
+    @State private var selectedPhotos: [PhotosPickerItem] = []
+    @State private var selectedImages: [UIImage] = []
     @StateObject private var commentsService = CommentsContractService()
     @StateObject private var pollingService = CommentPollingService()
     @StateObject private var balanceService = BalanceService()
+    @StateObject private var imageUploadService = ImageUploadService()
     @State private var hasSufficientBalance: Bool = true
     @State private var identityAddress: String? = nil
     @State private var authorProfile: AuthorProfile? = nil
@@ -64,105 +71,15 @@ struct ComposeCommentView: View {
                     }
                 }
                 if identityService.isCheckingIdentity {
-                    // Loading state while checking configuration
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.2)
-                        
-                        Text("Checking configuration...")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding()
+                    loadingView
                 } else if !identityService.isIdentityConfigured {
-                    // No identity configured - show message and settings button
-                    VStack(spacing: 20) {
-                        Spacer()
-                        
-                        VStack(spacing: 16) {
-                            Image(systemName: "person.crop.circle.badge.exclamationmark")
-                                .font(.system(size: 48))
-                                .foregroundColor(.orange)
-                            
-                            Text("Configure identity and approval to post")
-                                .font(.headline)
-                                .multilineTextAlignment(.center)
-                            
-                            Text("You need to configure your identity address and get approval in settings before you can post comments.")
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        
-                        Button(action: {
-                            showingSettings = true
-                        }) {
-                            HStack {
-                                Image(systemName: "gearshape")
-                                Text("Open Settings")
-                            }
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .cornerRadius(12)
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding(20)
+                    configurationRequiredView  
                 } else {
                     // Identity configured - show normal compose interface
                     
                     // Reply context (if replying to a comment)
                     if let parentComment = parentComment {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Image(systemName: "arrowshape.turn.up.left")
-                                    .foregroundColor(.secondary)
-                                    .font(.caption)
-                                Text("Replying to")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                            }
-                            
-                            HStack(alignment: .top, spacing: 8) {
-                                // Parent comment avatar (unified)
-                                AvatarView(
-                                    address: parentComment.author.address,
-                                    size: 24,
-                                    ensAvatarUrl: parentComment.author.ens?.avatarUrl,
-                                    farcasterPfpUrl: parentComment.author.farcaster?.pfpUrl
-                                )
-
-                                VStack(alignment: .leading, spacing: 2) {
-                                    // Author name (unified)
-                                    Text(
-                                        Utils.displayName(
-                                            ensName: parentComment.author.ens?.name,
-                                            farcasterUsername: parentComment.author.farcaster?.username,
-                                            fallbackAddress: parentComment.author.address
-                                        )
-                                    )
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-
-                                    // Parent comment content (truncated)
-                                    Text(parentComment.content)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .lineLimit(2)
-                                }
-
-                                Spacer()
-                            }
-                        }
-                        .padding(12)
-                        .background(Color(UIColor.secondarySystemGroupedBackground))
-                        .cornerRadius(8)
+                        replyContextView(for: parentComment)
                     }
                     
                     // Text Editor with Avatar
@@ -208,14 +125,71 @@ struct ComposeCommentView: View {
                             }
                         }
                     }
-                }
-                
-                // Character Count
-                HStack {
-                    Spacer()
-                    Text("\(commentText.count)/500")
-                        .font(.caption)
-                        .foregroundColor(commentText.count > 500 ? .red : .secondary)
+                    
+                    // Image Selection - Grid for 3 or fewer, Carousel for more
+                    if !selectedImages.isEmpty {
+                        if selectedImages.count <= 3 {
+                            // Grid layout for 3 or fewer images
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                                ForEach(Array(selectedImages.enumerated()), id: \.offset) { index, image in
+                                    imageView(for: image, at: index)
+                                }
+                            }
+                        } else {
+                            // Horizontal carousel for more than 3 images
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(Array(selectedImages.enumerated()), id: \.offset) { index, image in
+                                        imageView(for: image, at: index)
+                                            .frame(width: 120, height: 120)
+                                    }
+                                }
+                                .padding(.horizontal, 4)
+                            }
+                        }
+                    }
+                    
+                    // Image Upload Progress
+                    if imageUploadService.isUploading {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                Text(selectedImages.count > 1 ? "Uploading images..." : "Uploading image...")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("\(Int(imageUploadService.uploadProgress * 100))%")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            ProgressView(value: imageUploadService.uploadProgress)
+                                .progressViewStyle(LinearProgressViewStyle())
+                        }
+                    }
+                    
+                    // Character Count and Image Upload
+                    HStack {
+                        // Image Picker Button
+                        PhotosPicker(selection: $selectedPhotos, matching: .images) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "photo.fill")
+                                    .font(.system(size: 16, weight: .medium))
+                            }
+                            .foregroundColor(.gray)
+                            .padding(.vertical, 6)
+                            
+                        }
+                        .disabled(imageUploadService.isUploading || selectedImages.count >= maxImages)
+                        
+                         Spacer()
+                        
+                         // Character Count
+                         Text("\(commentText.count)/500")
+                             .font(.caption)
+                             .foregroundColor(commentText.count > 500 ? .red : .secondary)
+                    }
                 }
                 
                 // Error Message
@@ -224,6 +198,19 @@ struct ComposeCommentView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.red)
                         Text(errorMessage)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 4)
+                }
+                
+                // Image upload error
+                if let uploadError = imageUploadService.uploadError {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
+                        Text(uploadError)
                             .font(.caption)
                             .foregroundColor(.red)
                         Spacer()
@@ -310,6 +297,138 @@ struct ComposeCommentView: View {
                 }
             }
         }
+        .onChange(of: selectedPhotos) { newPhotos in
+            Task {
+                // Clear existing images first
+                await MainActor.run {
+                    selectedImages.removeAll()
+                }
+                
+                // Process new photos (limit to maxImages)
+                let photosToProcess = Array(newPhotos.prefix(maxImages))
+                
+                for photo in photosToProcess {
+                    do {
+                        if let data = try await photo.loadTransferable(type: Data.self) {
+                            if let uiImage = UIImage(data: data) {
+                                await MainActor.run {
+                                    if selectedImages.count < maxImages {
+                                        selectedImages.append(uiImage)
+                                    }
+                                }
+                            }
+                        }
+                    } catch {
+                        await MainActor.run {
+                            imageUploadService.uploadError = "Failed to load one or more images"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Computed Views
+extension ComposeCommentView {
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.2)
+            
+            Text("Checking configuration...")
+                .font(.body)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+    
+    private var configurationRequiredView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            
+            VStack(spacing: 16) {
+                Image(systemName: "person.crop.circle.badge.exclamationmark")
+                    .font(.system(size: 48))
+                    .foregroundColor(.orange)
+                
+                Text("Configure identity and approval to post")
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+                
+                Text("You need to configure your identity address and get approval in settings before you can post comments.")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            
+            Button(action: {
+                showingSettings = true
+            }) {
+                HStack {
+                    Image(systemName: "gearshape")
+                    Text("Open Settings")
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.blue)
+                .cornerRadius(12)
+            }
+            
+            Spacer()
+        }
+        .padding(20)
+    }
+    
+    private func replyContextView(for parentComment: Comment) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "arrowshape.turn.up.left")
+                    .foregroundColor(.secondary)
+                    .font(.caption)
+                Text("Replying to")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+
+            HStack(alignment: .top, spacing: 8) {
+                // Parent comment avatar (unified)
+                AvatarView(
+                    address: parentComment.author.address,
+                    size: 24,
+                    ensAvatarUrl: parentComment.author.ens?.avatarUrl,
+                    farcasterPfpUrl: parentComment.author.farcaster?.pfpUrl
+                )
+
+                VStack(alignment: .leading, spacing: 2) {
+                    // Author name (unified)
+                    Text(
+                        Utils.displayName(
+                            ensName: parentComment.author.ens?.name,
+                            farcasterUsername: parentComment.author.farcaster?.username,
+                            fallbackAddress: parentComment.author.address
+                        )
+                    )
+                    .font(.caption)
+                    .fontWeight(.medium)
+
+                    // Parent comment content (truncated)
+                    Text(parentComment.content)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+            }
+        }
+        .padding(12)
+        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .cornerRadius(8)
     }
 }
 
@@ -398,9 +517,29 @@ extension ComposeCommentView {
     private func postComment() {
         isPosting = true
         errorMessage = nil
+        imageUploadService.uploadError = nil
         
         Task {
             do {
+                // Upload images if any are selected
+                var finalCommentText = commentText
+                if !selectedImages.isEmpty {
+                    do {
+                        var imageURLs: [String] = []
+                        for image in selectedImages {
+                            let imageURL = try await imageUploadService.uploadImage(image)
+                            imageURLs.append(imageURL)
+                        }
+                        // Append all image URLs to the comment text
+                        finalCommentText = commentText + " " + imageURLs.joined(separator: " ")
+                    } catch {
+                        await MainActor.run {
+                            imageUploadService.uploadError = error.localizedDescription
+                            isPosting = false
+                        }
+                        return
+                    }
+                }
                 // Retrieve stored data from keychain
                 guard let identityAddress = try KeychainManager.retrieveIdentityAddress() else {
                     throw KeychainManager.KeychainError.itemNotFound
@@ -418,7 +557,7 @@ extension ComposeCommentView {
                     identityAddress: identityAddress,
                     appAddress: appAddress,
                     channelId: channelIdForCurrentContext(),
-                    content: commentText,
+                    content: finalCommentText,
                     targetUri: "",
                     parentId: parentId
                 )
@@ -489,6 +628,34 @@ extension ComposeCommentView {
                     isPosting = false
                 }
             }
+        }
+    }
+    
+    // MARK: - Helper Views
+    @ViewBuilder
+    private func imageView(for image: UIImage, at index: Int) -> some View {
+        ZStack(alignment: .topTrailing) {
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(height: 120)
+                .clipped()
+                .cornerRadius(8)
+            
+            // Delete button overlay
+            Button(action: {
+                selectedImages.remove(at: index)
+                if index < selectedPhotos.count {
+                    selectedPhotos.remove(at: index)
+                }
+            }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.white)
+                    .background(Color.black.opacity(0.6))
+                    .clipShape(Circle())
+            }
+            .padding(6)
         }
     }
 }
