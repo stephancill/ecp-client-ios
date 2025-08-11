@@ -217,13 +217,8 @@ struct CommentRowView: View {
                 .buttonStyle(.plain)
             }
             
-            // Subtle divider
-            Divider()
-                .background(Color(.separator))
-                .opacity(0.6)
-                .padding(.horizontal, -16)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 16)
         .padding(.horizontal, 16)
         .background(Color.clear)
         .disabled(isDeleting)

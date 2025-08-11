@@ -45,6 +45,7 @@
 		D4F3889D2E4912E10019E0C0 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889C2E4912E10019E0C0 /* AvatarView.swift */; };
 		D4F3889F2E491F360019E0C0 /* InfoBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F3889E2E491F360019E0C0 /* InfoBannerView.swift */; };
 		D4F388A12E4923080019E0C0 /* AuthorProfileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388A02E4923080019E0C0 /* AuthorProfileService.swift */; };
+		D4F388A32E4A09770019E0C0 /* CommentsList.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F388A22E4A09770019E0C0 /* CommentsList.swift */; };
 		D4FF6E4D2E4237C100A51874 /* CommentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4C2E4237C000A51874 /* CommentsService.swift */; };
 		D4FF6E4F2E4238C800A51874 /* ChannelsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */; };
 		D4FF6E512E424FC300A51874 /* ImageViewerModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */; };
@@ -89,6 +90,7 @@
 		D4F3889C2E4912E10019E0C0 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
 		D4F3889E2E491F360019E0C0 /* InfoBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoBannerView.swift; sourceTree = "<group>"; };
 		D4F388A02E4923080019E0C0 /* AuthorProfileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorProfileService.swift; sourceTree = "<group>"; };
+		D4F388A22E4A09770019E0C0 /* CommentsList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsList.swift; sourceTree = "<group>"; };
 		D4FF6E4C2E4237C000A51874 /* CommentsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsService.swift; sourceTree = "<group>"; };
 		D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelsService.swift; sourceTree = "<group>"; };
 		D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewerModal.swift; sourceTree = "<group>"; };
@@ -147,6 +149,7 @@
 				D4F3889E2E491F360019E0C0 /* InfoBannerView.swift */,
 				D4F3888F2E44CD390019E0C0 /* NotificationService.swift */,
 				D4FF6E502E424FC300A51874 /* ImageViewerModal.swift */,
+				D4F388A22E4A09770019E0C0 /* CommentsList.swift */,
 				D4542E332E40AA46007F1A6C /* IdentityService.swift */,
 				D4FF6E4E2E4238C800A51874 /* ChannelsService.swift */,
 				D4F388932E44CD640019E0C0 /* AuthService.swift */,
@@ -295,6 +298,7 @@
 				D4C7B2C02E3E67D9002B087F /* UserDetailView.swift in Sources */,
 				D4F3889D2E4912E10019E0C0 /* AvatarView.swift in Sources */,
 				D4FF6E4F2E4238C800A51874 /* ChannelsService.swift in Sources */,
+				D4F388A32E4A09770019E0C0 /* CommentsList.swift in Sources */,
 				D4BEED972E3F907100A45974 /* CommentManager.swift in Sources */,
 				D4C7B2C42E3E9DBB002B087F /* ContentParser.swift in Sources */,
 				D4F388902E44CD390019E0C0 /* NotificationService.swift in Sources */,

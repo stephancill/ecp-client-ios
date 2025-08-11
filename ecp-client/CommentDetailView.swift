@@ -29,10 +29,14 @@ struct CommentDetailView: View {
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                     } else if let parent = parentComment {
-                        CommentRowView(comment: parent, currentUserAddress: nil, channelsService: nil)
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
+                        CommentsList(
+                            comments: [parent],
+                            currentUserAddress: nil,
+                            channelsService: nil
+                        )
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                     }
                 }
             }
@@ -45,10 +49,14 @@ struct CommentDetailView: View {
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
                 } else if let main = mainComment {
-                    CommentRowView(comment: main, currentUserAddress: nil, channelsService: nil)
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
+                    CommentsList(
+                        comments: [main],
+                        currentUserAddress: nil,
+                        channelsService: nil
+                    )
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
                 }
             }
 
@@ -62,12 +70,14 @@ struct CommentDetailView: View {
                             .listRowBackground(Color.clear)
                     }
                 } else {
-                    ForEach(replies) { reply in
-                        CommentRowView(comment: reply, currentUserAddress: nil, channelsService: nil)
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-                    }
+                    CommentsList(
+                        comments: replies,
+                        currentUserAddress: nil,
+                        channelsService: nil
+                    )
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
                 }
             }
         }
