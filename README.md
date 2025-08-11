@@ -48,39 +48,6 @@ town is an iOS app that lets you post comments to the Ethereum Comments Protocol
    - Replace `YOUR_PINATA_JWT_TOKEN_HERE` with your actual JWT token
    - Replace `YOUR_PINATA_GATEWAY_URL_HERE` with your gateway URL
 
-## Developer Setup
-
-### Personal Configuration
-
-This project uses a shared `project.pbxproj` file but allows developers to override specific settings using `UserConfig.xcconfig`.
-
-### Current Shared Settings:
-
-- **Bundle Identifier:** `co.za.stephancill.town`
-- **Development Team:** `6JKMV57Y77`
-
-### Setup Your Personal Settings:
-
-1. **Copy the template:**
-
-   ```bash
-   cp ecp-client/UserConfig.xcconfig.template ecp-client/UserConfig.xcconfig
-   ```
-
-2. **Edit UserConfig.xcconfig** with your personal values:
-
-   - `PRODUCT_BUNDLE_IDENTIFIER = com.yourname.town`
-   - `DEVELOPMENT_TEAM = YOUR_TEAM_ID_HERE`
-
-3. **Configure in Xcode**
-
-4. **Open the project in Xcode**
-5. **Select the project** in the navigator
-6. **Select the "ecp-client" target**
-7. **Go to "Build Settings" tab**
-8. **Click the "+" button** → "Add User-Defined Setting"
-9. **Add:** `xcconfig` with value: `UserConfig.xcconfig`
-
 ## Documentation
 
 - [SUPPORT.md](SUPPORT.md) - Support information
