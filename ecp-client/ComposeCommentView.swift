@@ -314,6 +314,17 @@ struct ComposeCommentView: View {
 }
 
 extension ComposeCommentView {
+    private func channelIdForCurrentContext() -> BigUInt {
+        if let parentComment = parentComment {
+            let raw = parentComment.channelId.trimmingCharacters(in: .whitespacesAndNewlines)
+            if raw.lowercased().hasPrefix("0x") {
+                if let parsed = BigUInt(raw.dropFirst(2), radix: 16) { return parsed }
+            } else if let parsed = BigUInt(raw, radix: 10) {
+                return parsed
+            }
+        }
+        return CommentParams.defaultChannelId
+    }
     private func loadIdentityAndProfile() async {
         do {
             if let addr = try KeychainManager.retrieveIdentityAddress() {
@@ -343,14 +354,14 @@ extension ComposeCommentView {
 
             // Build params with minimal content; gas does not depend on text size materially, but use current text
             let parentId: Data? = parentComment != nil ? Data(hex: parentComment!.id) : nil
-                let params = CommentParams(
-                    identityAddress: identityAddress,
-                    appAddress: appAddress,
-                    channelId: CommentParams.defaultChannelId,
-                    content: commentText.isEmpty ? "." : commentText,
-                    targetUri: "",
-                    parentId: parentId
-                )
+            let params = CommentParams(
+                identityAddress: identityAddress,
+                appAddress: appAddress,
+                channelId: channelIdForCurrentContext(),
+                content: commentText.isEmpty ? "." : commentText,
+                targetUri: "",
+                parentId: parentId
+            )
 
             // Estimate post cost
             let result = try await commentsService.estimatePostCost(params: params, fromPrivateKey: privateKey)
@@ -406,7 +417,7 @@ extension ComposeCommentView {
                 let commentParams = CommentParams(
                     identityAddress: identityAddress,
                     appAddress: appAddress,
-                    channelId: CommentParams.defaultChannelId,
+                    channelId: channelIdForCurrentContext(),
                     content: commentText,
                     targetUri: "",
                     parentId: parentId

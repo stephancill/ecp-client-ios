@@ -318,6 +318,33 @@ public class CommentsContractService: ObservableObject {
         }
     }
     
+    // MARK: - Debug Helpers
+    
+    private func debugLogNetworkError(_ error: Error, context: String) {
+        let nsError = error as NSError
+        print("❌ [\(context)] error: \(nsError.localizedDescription)")
+        print("❌ [\(context)] domain=\(nsError.domain) code=\(nsError.code)")
+        if !nsError.userInfo.isEmpty {
+            print("❌ [\(context)] userInfo: \(nsError.userInfo)")
+        }
+        // Attempt to surface any response text/data commonly embedded by networking layers
+        if let data = nsError.userInfo["data"] as? Data, let text = String(data: data, encoding: .utf8) {
+            print("❌ [\(context)] response text: \(text)")
+        }
+        if let responseData = nsError.userInfo["responseData"] as? Data, let text = String(data: responseData, encoding: .utf8) {
+            print("❌ [\(context)] response text: \(text)")
+        }
+        if let failureReason = nsError.userInfo[NSLocalizedFailureReasonErrorKey] as? String {
+            print("❌ [\(context)] failureReason: \(failureReason)")
+        }
+        if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError {
+            print("❌ [\(context)] underlying: domain=\(underlying.domain) code=\(underlying.code) desc=\(underlying.localizedDescription)")
+            if let data = underlying.userInfo["data"] as? Data, let text = String(data: data, encoding: .utf8) {
+                print("❌ [\(context)] underlying response text: \(text)")
+            }
+        }
+    }
+    
     // MARK: - Gas Estimation
     
     /// Estimate gas for a transaction
@@ -546,10 +573,14 @@ public class CommentsContractService: ObservableObject {
                             continuation.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "No transaction hash returned"]))
                         }
                     case .failure(let error):
+                        // Log detailed error information, including any response text
+                        self.debugLogNetworkError(error, context: "sendRawTransaction")
                         continuation.resume(throwing: error)
                     }
                 }
             } catch {
+                // Log failures from invoking sendRawTransaction itself
+                self.debugLogNetworkError(error, context: "sendRawTransaction.invoke")
                 continuation.resume(throwing: error)
             }
         }
