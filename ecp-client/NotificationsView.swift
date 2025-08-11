@@ -78,7 +78,7 @@ struct NotificationsView: View {
                     return result
                 }()
 
-                ForEach(displayEvents, id: \.id) { event in
+                ForEach(Array(displayEvents.enumerated()), id: \.element.id) { index, event in
                     HStack(alignment: .top, spacing: 12) {
                         // Notification type icon
                         NotificationIconView(type: event.type)
@@ -144,6 +144,7 @@ struct NotificationsView: View {
                         }
                     }
                     .padding(.vertical, 8)
+                    .listRowSeparator(index == 0 ? .hidden : .visible, edges: .top)
                     .onAppear {
                         Task { await notificationService.loadMoreIfNeeded(currentItem: event) }
                     }
@@ -169,9 +170,8 @@ struct NotificationsView: View {
             await refresh()
         }
         .onAppear {
-            if notificationService.events.isEmpty {
-                Task { await notificationService.fetchEvents() }
-            }
+            // Trigger a refresh when the view appears
+            Task { await refresh() }
             Task { await notificationService.checkNotificationStatus() }
             // Mark all as read when opening the notifications view
             notificationService.markAllAsRead()
