@@ -58,6 +58,72 @@ class APIService: ObservableObject {
             throw APIError.serverError(errorMessage)
         }
     }
+
+    // MARK: - Post Subscriptions
+
+    struct PostSubscriptionStatus: Codable { let success: Bool; let subscribed: Bool?; let subscription: PostSubscriptionRecord?; let subscriptions: [PostSubscriptionRecord]? }
+    struct PostSubscriptionRecord: Codable, Identifiable { let id: String; let targetAuthor: String?; let createdAt: String; let updatedAt: String }
+
+    func isSubscribedToPosts(of author: String) async throws -> Bool {
+        guard let token = authService.getAuthToken() else { throw APIError.notAuthenticated }
+        var components = URLComponents(string: "\(baseURL)/api/subscriptions/posts")!
+        components.queryItems = [URLQueryItem(name: "author", value: author)]
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else { throw APIError.networkError("Invalid response") }
+        if httpResponse.statusCode == 200 {
+            let result = try JSONDecoder().decode(PostSubscriptionStatus.self, from: data)
+            return result.subscribed ?? false
+        } else if httpResponse.statusCode == 401 {
+            await authService.authenticate(); throw APIError.authenticationExpired
+        } else {
+            let errorResult = try? JSONDecoder().decode(APIErrorResponse.self, from: data)
+            throw APIError.serverError(errorResult?.error ?? "Unknown error")
+        }
+    }
+
+    func subscribeToPosts(of author: String) async throws -> Bool {
+        guard let token = authService.getAuthToken() else { throw APIError.notAuthenticated }
+        let url = URL(string: "\(baseURL)/api/subscriptions/posts")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let body: [String: Any] = ["author": author]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else { throw APIError.networkError("Invalid response") }
+        if httpResponse.statusCode == 200 {
+            let result = try JSONDecoder().decode(NotificationResult.self, from: data)
+            return result.success
+        } else if httpResponse.statusCode == 401 {
+            await authService.authenticate(); throw APIError.authenticationExpired
+        } else {
+            let errorResult = try? JSONDecoder().decode(APIErrorResponse.self, from: data)
+            throw APIError.serverError(errorResult?.error ?? "Unknown error")
+        }
+    }
+
+    func unsubscribeFromPosts(of author: String) async throws -> Bool {
+        guard let token = authService.getAuthToken() else { throw APIError.notAuthenticated }
+        let url = URL(string: "\(baseURL)/api/subscriptions/posts/\(author)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else { throw APIError.networkError("Invalid response") }
+        if httpResponse.statusCode == 200 {
+            let result = try JSONDecoder().decode(NotificationResult.self, from: data)
+            return result.success
+        } else if httpResponse.statusCode == 401 {
+            await authService.authenticate(); throw APIError.authenticationExpired
+        } else {
+            let errorResult = try? JSONDecoder().decode(APIErrorResponse.self, from: data)
+            throw APIError.serverError(errorResult?.error ?? "Unknown error")
+        }
+    }
     
     /// Get registered device tokens
     /// - Returns: Array of notification details

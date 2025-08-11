@@ -4,6 +4,7 @@ import { getHonoRoute } from "./lib/bullboard";
 import notificationsApp from "./routes/notifications";
 import approvalsApp from "./routes/approvals";
 import siweApp from "./routes/siwe";
+import subscriptionsApp from "./routes/subscriptions";
 
 const app = new Hono();
 
@@ -30,6 +31,7 @@ app.route("/bullboard", getHonoRoute("/bullboard"));
 app.route("/api/auth", siweApp);
 app.route("/api/notifications", notificationsApp);
 app.route("/api/approvals", approvalsApp);
+app.route("/api/subscriptions", subscriptionsApp);
 
 app.get("/", (c) => {
   return c.text("Hello Hono!");

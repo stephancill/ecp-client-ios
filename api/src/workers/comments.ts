@@ -131,7 +131,43 @@ export const commentWorker = new Worker<CommentJobData>(
       });
     }
 
-    // TODO: Notify followers of author
+    // Notify subscribers to this author's posts (followers)
+    try {
+      const lowerAuthor = comment.author.address.toLowerCase();
+      // Find app userIds who subscribed to this author and have at least one device registered
+      // Join post_subscriptions -> users.notifications exists
+      // Prisma: find users where postSubscriptions.some({ targetAuthor: lowerAuthor }) and notifications.some({})
+      const subs = await (
+        await import("../lib/prisma")
+      ).prisma.user.findMany({
+        where: {
+          postSubscriptions: { some: { targetAuthor: lowerAuthor } },
+          notifications: { some: {} },
+        },
+        select: { id: true },
+      });
+
+      const uniqueUserIds = Array.from(new Set(subs.map((u) => u.id)));
+      if (uniqueUserIds.length > 0) {
+        await notificationsQueue.add(NOTIFICATIONS_QUEUE_NAME, {
+          author: comment.author.address,
+          targetUserIds: uniqueUserIds,
+          notification: sanitizeNotificationData({
+            title: `@${authorUsername} posted`,
+            body: comment.content,
+            data: {
+              type: "post",
+              commentId: comment.id,
+              parentId: parentId ?? null,
+              chainId,
+              actorAddress: comment.author.address,
+            },
+          }),
+        });
+      }
+    } catch (e) {
+      console.error("Failed to enqueue subscriber notifications", e);
+    }
   },
   {
     connection: redisQueue,

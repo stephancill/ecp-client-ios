@@ -5,8 +5,7 @@ import { syncApprovalsForApp } from "../lib/approvals";
 import { sendNotficationToUser } from "../lib/notifications";
 import { fetchBatchCachedUserData } from "../lib/ecp";
 import { isAddress } from "viem";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key";
+import { JWT_SECRET } from "../lib/constants";
 
 const app = new Hono();
 

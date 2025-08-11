@@ -45,6 +45,7 @@ A SwiftUI iOS app and Bun + Hono backend for the Ethereum Comments Protocol (ECP
   - In-app notification center: server-side history with pagination
   - Reaction aggregation (e.g., “Alice and 3 others liked your post”), avatar rows
   - Taps deep link to the relevant post or parent thread
+  - Post subscriptions: enable notifications when a specific user posts (toggle via bell icon on their profile)
 - Authentication
   - SIWE: request nonce, sign message locally, verify, and store JWT in Keychain
   - Auto re-auth on 401; token validation on launch
@@ -66,12 +67,14 @@ A SwiftUI iOS app and Bun + Hono backend for the Ethereum Comments Protocol (ECP
   - Register/remove device tokens; list and status endpoints
   - Send test notification; persist notification events for in-app feed
   - APNs via token-based auth; invalid token cleanup
+  - Post subscriptions: subscribe/unsubscribe to author posts; fanout notifications to subscribers
 - Background processing
   - `comments` worker: reacts to on-chain comments, notifies parent on reply/reaction, mentions
   - `notifications` worker: fans out to approved app accounts with registered devices
   - On-chain listener watches `CommentManager` on Base and enqueues jobs
 - Data model (Prisma)
   - `User` (id = app address), `NotificationDetails` (device tokens), `Approval` (author→app approvals)
+  - `PostSubscription` (user→targetAuthor subscriptions for post notifications)
 
 ## Quick start
 
