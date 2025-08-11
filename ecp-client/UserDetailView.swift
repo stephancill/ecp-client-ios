@@ -29,6 +29,9 @@ struct UserDetailView: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var showHeaderAvatar: Bool = false
     @State private var currentUserAddress: String?
+    @EnvironmentObject private var authService: AuthService
+    @State private var isSubscribedToPosts: Bool = false
+    @State private var isTogglingSubscription: Bool = false
     
     init(avatar: String?, username: String, address: String) {
         self.avatar = avatar
@@ -73,6 +76,7 @@ struct UserDetailView: View {
             }
             // Load current user's identity address
             loadCurrentUserAddress()
+            Task { await refreshSubscriptionStatus() }
         }
     }
     
@@ -252,6 +256,17 @@ struct UserDetailView: View {
             .opacity(showHeaderAvatar ? 1 : 0)
             .animation(.easeInOut(duration: 0.2), value: showHeaderAvatar)
         }
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button(action: { Task { await toggleSubscription() } }) {
+                if isTogglingSubscription {
+                    ProgressView()
+                } else {
+                    Image(systemName: isSubscribedToPosts ? "bell.fill" : "bell")
+                }
+            }
+            .disabled(isTogglingSubscription)
+            .accessibilityLabel(isSubscribedToPosts ? "Disable post notifications" : "Enable post notifications")
+        }
     }
     
     // MARK: - Helper Methods
@@ -276,6 +291,35 @@ struct UserDetailView: View {
             // Silently handle error - user might not have set up identity yet
             currentUserAddress = nil
         }
+    }
+
+    private func refreshSubscriptionStatus() async {
+        guard authService.isAuthenticated else { return }
+        let api = APIService(authService: authService)
+        do {
+            let subscribed = try await api.isSubscribedToPosts(of: address)
+            await MainActor.run { self.isSubscribedToPosts = subscribed }
+        } catch {
+            // ignore
+        }
+    }
+
+    private func toggleSubscription() async {
+        guard authService.isAuthenticated else { return }
+        isTogglingSubscription = true
+        let api = APIService(authService: authService)
+        do {
+            if isSubscribedToPosts {
+                _ = try await api.unsubscribeFromPosts(of: address)
+                isSubscribedToPosts = false
+            } else {
+                _ = try await api.subscribeToPosts(of: address)
+                isSubscribedToPosts = true
+            }
+        } catch {
+            // TODO: surface an error banner if desired
+        }
+        isTogglingSubscription = false
     }
 }
 

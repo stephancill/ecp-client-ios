@@ -1,8 +1,7 @@
 import { Hono } from "hono";
 import { jwt } from "hono/jwt";
 import { syncApprovalsForApp } from "../lib/approvals";
-
-const JWT_SECRET = process.env.JWT_SECRET!;
+import { JWT_SECRET } from "../lib/constants";
 
 const app = new Hono();
 

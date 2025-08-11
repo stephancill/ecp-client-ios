@@ -15,6 +15,7 @@ model User {
   approvals          Approval[]
   notificationEvents NotificationEvent[]
   notifications      NotificationDetails[]
+  postSubscriptions  PostSubscription[]
 
   @@map("users")
 }
@@ -84,4 +85,19 @@ enum NotificationType {
   mention
   follow
   system
+  post
+}
+
+model PostSubscription {
+  id            String   @id @default(cuid())
+  userId        String
+  targetAuthor  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetAuthor])
+  @@index([targetAuthor])
+  @@index([userId])
+  @@map("post_subscriptions")
 }

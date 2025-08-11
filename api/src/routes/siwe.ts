@@ -1,12 +1,11 @@
 import { Hono } from "hono";
 import { deleteCookie, setCookie } from "hono/cookie";
 import { jwt, sign } from "hono/jwt";
+import { JWT_SECRET } from "../lib/constants";
 import { verifyMessage } from "viem";
 import { generateSiweNonce, parseSiweMessage } from "viem/siwe";
 import { syncApprovalsForApp } from "../lib/approvals";
 import { redisCache } from "../lib/redis";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key";
 
 const app = new Hono();
 

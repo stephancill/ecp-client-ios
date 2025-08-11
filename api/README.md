@@ -6,6 +6,7 @@ A Bun + Hono backend for ECP (Ethereum Comments Protocol) integrations. It provi
 - Device registration and APNs push notifications
 - On-chain comment listener and background workers using BullMQ
 - Bull Board UI for monitoring queues
+- Post subscriptions (per-author): subscribe to be notified when an author posts
 
 Visit `http://localhost:3000` to verify the server is running.
 
@@ -131,6 +132,25 @@ Base path: `/api/notifications` (all endpoints require auth via `auth` cookie or
   - Sends a test APNs notification to all of the authenticated user’s devices.
   - Response: `{ success: true, message: string }`
 
+### Subscriptions (Post notifications)
+
+Base path: `/api/subscriptions` (requires auth)
+
+- GET `/posts?author=0x...`
+
+  - When `author` provided: returns `{ success: true, subscribed: boolean, subscription?: {...} }` for the current user.
+  - When omitted: returns `{ success: true, subscriptions: Array<{ id, targetAuthor, createdAt, updatedAt }> }`.
+
+- POST `/posts`
+
+  - Body: `{ "author": "0x..." }` (target author address)
+  - Response: `{ success: true, id }`
+
+- DELETE `/posts/:author`
+
+  - Unsubscribe from post notifications for the specified author
+  - Response: `{ success: true }`
+
 ### Misc
 
 - GET `/`
@@ -150,7 +170,7 @@ Queues (`src/lib/constants.ts`):
 Workers (`bun run workers`):
 
 - `notifications` (`src/workers/notifications.ts`): For a given author address, find approved app accounts with registered devices and send APNs notifications in bulk.
-- `comments` (`src/workers/comments.ts`): Fetches comment data, notifies parent author on reply/reaction, and any mentioned addresses.
+- `comments` (`src/workers/comments.ts`): Fetches comment data, notifies parent author on reply/reaction, any mentioned addresses, and subscribers to the author on new posts.
 
 On-chain listener (`bun run listener`):
 
@@ -161,6 +181,7 @@ On-chain listener (`bun run listener`):
 - `User`: primary key is the app address (lowercased/normalized). Holds relations to `notifications` and `approvals`.
 - `NotificationDetails`: device token registrations per user; unique on `(userId, deviceToken)`.
 - `Approval`: approvals of authors for app accounts; soft-deletable via `deletedAt`. Unique on `(author, app, chainId)`.
+- `PostSubscription`: `userId` subscribes to `targetAuthor`. Unique on `(userId, targetAuthor)`.
 
 ## Types
 

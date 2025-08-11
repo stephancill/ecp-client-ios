@@ -18,26 +18,27 @@ export const notificationsBulkWorker = new Worker<NotificationJobData>(
      * via the approvals table and then we need to join that with the user id on the notifications table
      */
 
-    // Find app accounts that are approved to post for this author on this chain
-    const approvals = await prisma.approval.findMany({
-      where: {
-        author: job.data.author.toLowerCase(),
-        deletedAt: null,
-        // Only include approvals where the related app user has at least one notification record
-        user: {
-          notifications: {
-            some: {},
-          },
+    let targetUserIds: string[] = [];
+
+    if (job.data.targetUserIds && job.data.targetUserIds.length > 0) {
+      // Directly targeted user IDs (e.g., subscribers)
+      targetUserIds = Array.from(new Set(job.data.targetUserIds));
+    } else {
+      // Find app accounts that are approved to post for this author
+      const approvals = await prisma.approval.findMany({
+        where: {
+          author: job.data.author.toLowerCase(),
+          deletedAt: null,
+          user: { notifications: { some: {} } },
         },
-      },
-      select: { app: true },
-    });
+        select: { app: true },
+      });
+      targetUserIds = Array.from(new Set(approvals.map((a) => a.app)));
+    }
 
-    const uniqueAppUserIds = Array.from(new Set(approvals.map((a) => a.app)));
-
-    if (uniqueAppUserIds.length === 0) {
+    if (targetUserIds.length === 0) {
       console.log(
-        `No approved app accounts found for author ${job.data.author} skipping.`
+        `No target users found for notification job for author ${job.data.author} skipping.`
       );
       return;
     }
@@ -46,7 +47,7 @@ export const notificationsBulkWorker = new Worker<NotificationJobData>(
     try {
       const sanitized = sanitizeNotificationData(job.data.notification);
       await prisma.notificationEvent.createMany({
-        data: uniqueAppUserIds.map((userId) => ({
+        data: targetUserIds.map((userId) => ({
           userId,
           type: (sanitized.data?.type as any) ?? "system",
           originAddress:
@@ -80,7 +81,7 @@ export const notificationsBulkWorker = new Worker<NotificationJobData>(
     }
 
     await Promise.allSettled(
-      uniqueAppUserIds.map((userId) =>
+      targetUserIds.map((userId) =>
         sendNotficationToUser({
           userId,
           notification: job.data.notification,
@@ -89,7 +90,7 @@ export const notificationsBulkWorker = new Worker<NotificationJobData>(
     );
 
     console.log(
-      `Queued notifications for ${uniqueAppUserIds.length} app user(s) for author ${job.data.author}`
+      `Queued notifications for ${targetUserIds.length} app user(s) for author ${job.data.author}`
     );
   },
   {

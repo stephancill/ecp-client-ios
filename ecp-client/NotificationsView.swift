@@ -262,6 +262,11 @@ struct NotificationsView: View {
                 deepLinkService.pendingRoute = .comment(id: id, focusReplyId: nil, parentId: nil)
                 dismiss()
             }
+        case "post":
+            if let id = commentId {
+                deepLinkService.pendingRoute = .comment(id: id, focusReplyId: nil, parentId: parentId)
+                dismiss()
+            }
         default:
             if let id = commentId {
                 deepLinkService.pendingRoute = .comment(id: id, focusReplyId: nil, parentId: parentId)
@@ -351,6 +356,8 @@ struct NotificationIconView: View {
             return "at"
         case "follow":
             return "person.badge.plus.fill"
+        case "post":
+            return "megaphone.fill"
         case "system":
             return "gear.circle.fill"
         default:
@@ -368,6 +375,8 @@ struct NotificationIconView: View {
             return .orange.opacity(0.15)
         case "follow":
             return .green.opacity(0.15)
+        case "post":
+            return .purple.opacity(0.15)
         case "system":
             return .gray.opacity(0.15)
         default:
@@ -385,6 +394,8 @@ struct NotificationIconView: View {
             return .orange
         case "follow":
             return .green
+        case "post":
+            return .purple
         case "system":
             return .gray
         default:
