@@ -1,0 +1,38 @@
+# Xcode user-specific files
+*.xcuserstate
+*.xcuserdatad
+xcuserdata/
+project.xcworkspace/xcuserdata/
+
+# iOS/Xcode
+build/
+DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+!default.pbxuser
+!default.mode1v3
+!default.mode2v3
+!default.perspectivev3
+
+# Xcode project user data
+*.xcuserdatad/
+*.xcuserstate
+*.xcuserdatad
+xcuserdata/
+project.xcworkspace/xcuserdata/
+
+# Xcode scheme management (user-specific)
+xcuserdata/*/xcschemes/xcschememanagement.plist
+
+# Xcode user interface state
+*.xcuserstate
+
+# Xcode project user data directories
+**/xcuserdata/
+**/project.xcworkspace/xcuserdata/
+
+# iOS App Configuration (contains secrets)
+Info.plist
+UserConfig.xcconfig

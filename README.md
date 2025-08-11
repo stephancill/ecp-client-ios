@@ -120,6 +120,20 @@ Environment variables (selection; see `api/README.md`):
 - `ecp_clientApp.swift` wires `AuthService`, `NotificationService`, `DeepLinkService`, and promotes deep links from notifications.
 - Foreground notifications are shown as banner/list/sound via `UNUserNotificationCenterDelegate`.
 
+## Environment variables setup
+
+1. **Copy the template file:**
+
+   ```bash
+   cp ecp-client/Info.plist.template ecp-client/Info.plist
+   ```
+
+2. **Configure your Pinata credentials:**
+
+   - Get your Pinata JWT token from [Pinata Dashboard](https://app.pinata.cloud/)
+   - Replace `YOUR_PINATA_JWT_TOKEN_HERE` with your actual JWT token
+   - Replace `YOUR_PINATA_GATEWAY_URL_HERE` with your gateway URL
+
 ## Contributing / Development
 
 - iOS: SwiftUI, `@StateObject` service pattern, modular views, skeletons, and haptics.

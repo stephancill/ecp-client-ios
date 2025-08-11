@@ -4,6 +4,10 @@
 <dict>
 	<key>API_BASE_URL</key>
 	<string>https://town.steer.fun</string>
+	<key>PINATA_JWT</key>
+	<string>YOUR_PINATA_JWT_TOKEN_HERE</string>
+	<key>PINATA_GATEWAY_URL</key>
+	<string>YOUR_PINATA_GATEWAY_URL_HERE</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
