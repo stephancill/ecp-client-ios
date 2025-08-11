@@ -334,6 +334,58 @@ public class CommentsContractService: ObservableObject {
             }
         }
     }
+
+    /// Get current gas price (wei)
+    public func getGasPrice() async throws -> EthereumQuantity {
+        return try await withCheckedThrowingContinuation { continuation in
+            web3.eth.gasPrice { response in
+                switch response.status {
+                case .success:
+                    if let price = response.result {
+                        continuation.resume(returning: price)
+                    } else {
+                        continuation.resume(throwing: NSError(domain: "CommentsContractService", code: 0, userInfo: [NSLocalizedDescriptionKey: "No gas price returned"]))
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    /// Estimate the ETH cost to post a comment for the given parameters
+    /// Returns the tuple (gasLimitWei, gasPriceWei, totalCostWei)
+    public func estimatePostCost(params: CommentParams, fromPrivateKey privateKey: String) async throws -> (gasLimit: BigUInt, gasPrice: BigUInt, totalCost: BigUInt) {
+        let identityAddr = try EthereumAddress(hex: params.identityAddress, eip55: false)
+        let appAddr = try EthereumAddress(hex: params.appAddress, eip55: false)
+        let commentDeadline = BigUInt(params.deadline)
+        let parentId = params.parentId ?? Data(count: 32)
+        let commentData = CreateComment(
+            author: identityAddr,
+            app: appAddr,
+            channelId: BigUInt(integerLiteral: params.channelId),
+            deadline: commentDeadline,
+            parentId: parentId,
+            commentType: 0,
+            content: params.content,
+            metadata: params.metadata,
+            targetUri: params.targetUri
+        )
+
+        let ethereumPrivateKey = try EthereumPrivateKey(hexPrivateKey: privateKey.hasPrefix("0x") ? privateKey : "0x\(privateKey)")
+        let invocation = contract.postCommentWithSig(
+            commentData: commentData,
+            authorSignature: Data(count: 32),
+            appSignature: Data(count: 65)
+        )
+
+        let gasLimitQuantity = try await estimateGas(for: invocation, from: ethereumPrivateKey.address)
+        let gasPriceQuantity = try await getGasPrice()
+        let gasLimitWei = gasLimitQuantity.quantity
+        let gasPriceWei = gasPriceQuantity.quantity
+        let totalWei = gasLimitWei * gasPriceWei
+        return (gasLimitWei, gasPriceWei, totalWei)
+    }
     
     // MARK: - Approval Methods
     

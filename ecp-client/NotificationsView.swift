@@ -20,45 +20,22 @@ struct NotificationsView: View {
         List {
             // Permission banner
             if !notificationService.isRegistered {
-                HStack(alignment: .center, spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.blue.opacity(0.15))
-                            .frame(width: 36, height: 36)
-                        Image(systemName: "bell.badge.fill")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 16, weight: .semibold))
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Notifications are off")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        Text("Enable push notifications to get replies and mentions.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-
-                    Spacer(minLength: 8)
-
-                    Button(action: {
+                InfoBannerView(
+                    iconSystemName: "bell.badge.fill",
+                    iconBackgroundColor: Color.blue.opacity(0.15),
+                    iconForegroundColor: .blue,
+                    title: "Notifications are off",
+                    subtitle: "Enable push notifications to get replies and mentions.",
+                    buttonTitle: "Enable",
+                    buttonAction: {
                         let impact = UIImpactFeedbackGenerator(style: .light)
                         impact.impactOccurred()
                         Task {
                             await notificationService.requestNotificationPermissions()
                             await notificationService.checkNotificationStatus()
                         }
-                    }) {
-                        Text("Enable")
-                            .font(.system(.footnote, weight: .semibold))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
-                }
-                .padding(12)
+                )
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.blue.opacity(0.08))
@@ -110,14 +87,28 @@ struct NotificationsView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading, spacing: 6) {
-                                    // User profile image above title
-                                    if let actorProfile = event.actorProfile {
-                                        BlockiesAvatarView(
-                                            address: actorProfile.address,
-                                            size: 24
-                                        )
+                                    // Avatar row: primary + up to 10 others
+                                    HStack(spacing: 6) {
+                                        if let actorProfile = event.actorProfile {
+                                            AvatarView(
+                                                address: actorProfile.address,
+                                                size: 24,
+                                                ensAvatarUrl: actorProfile.ens?.avatarUrl,
+                                                farcasterPfpUrl: actorProfile.farcaster?.pfpUrl
+                                            )
+                                        }
+                                        if let others = event.otherActorProfiles {
+                                            ForEach(others.prefix(10), id: \.address) { p in
+                                                AvatarView(
+                                                    address: p.address,
+                                                    size: 24,
+                                                    ensAvatarUrl: p.ens?.avatarUrl,
+                                                    farcasterPfpUrl: p.farcaster?.pfpUrl
+                                                )
+                                            }
+                                        }
                                     }
-                                    
+
                                     Text(event.title)
                                         .font(.subheadline)
                                         .fontWeight(.medium)
@@ -331,63 +322,6 @@ struct NotificationSkeletonRowView: View {
                 isAnimating = true
             }
         }
-    }
-}
-
-// MARK: - AvatarView
-struct AvatarView: View {
-    let profile: AuthorProfile?
-    var body: some View {
-        Group {
-            if let url = firstValidURL(from: profile) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image): image.resizable().scaledToFill()
-                    case .failure(_): Circle().fill(Color.gray.opacity(0.3))
-                    case .empty: Circle().fill(Color.gray.opacity(0.3))
-                    @unknown default: Circle().fill(Color.gray.opacity(0.3))
-                    }
-                }
-            } else {
-                Circle().fill(Color.gray.opacity(0.3))
-            }
-        }
-    }
-
-    private func firstValidURL(from profile: AuthorProfile?) -> URL? {
-        guard let profile = profile else { return nil }
-        let candidates = [profile.ens?.avatarUrl, profile.farcaster?.pfpUrl]
-            .compactMap { $0 }
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        for raw in candidates {
-            if let url = urlFrom(raw: raw) {
-                return url
-            }
-        }
-        return nil
-    }
-
-    private func urlFrom(raw: String) -> URL? {
-        let urlStr = normalizeURLString(raw)
-        if urlStr.lowercased().hasPrefix("data:image/") {
-            return nil
-        }
-        return URL(string: urlStr)
-    }
-
-    private func normalizeURLString(_ input: String) -> String {
-        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.lowercased().hasPrefix("ipfs://") {
-            let path = String(trimmed.dropFirst("ipfs://".count))
-            return "https://ipfs.io/ipfs/" + path.replacingOccurrences(of: "ipfs/", with: "")
-        }
-        if trimmed.lowercased().hasPrefix("ar://") {
-            let id = String(trimmed.dropFirst("ar://".count))
-            return "https://arweave.net/" + id
-        }
-        if trimmed.hasPrefix("//") { return "https:" + trimmed }
-        return trimmed
     }
 }
 

@@ -29,6 +29,8 @@ struct SettingsView: View {
     @State private var showFundingError = false
     @StateObject private var balanceService = BalanceService()
     @StateObject private var commentsService = CommentsContractService()
+    @StateObject private var authorProfileService = AuthorProfileService.shared
+    @State private var authorProfile: AuthorProfile? = nil
     
     var body: some View {
         NavigationView {
@@ -41,16 +43,25 @@ struct SettingsView: View {
                 ) {
                     if let address = authorAddress {
                         VStack(alignment: .leading, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Connected Address")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .textCase(.uppercase)
-                                
-                                Text(Utils.truncateAddress(address))
-                                    .font(.system(.body, design: .monospaced))
-                                    .textSelection(.enabled)
+                            HStack(spacing: 12) {
+                                AvatarView(
+                                    address: address,
+                                    size: 40,
+                                    ensAvatarUrl: authorProfile?.ens?.avatarUrl,
+                                    farcasterPfpUrl: authorProfile?.farcaster?.pfpUrl
+                                )
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Connected Address")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .textCase(.uppercase)
+                                    Text(Utils.truncateAddress(address))
+                                        .font(.system(.body, design: .monospaced))
+                                        .textSelection(.enabled)
+                                }
                             }
+                            
+                            
                             
                             Divider()
                             
@@ -424,6 +435,10 @@ struct SettingsView: View {
         .onAppear {
             loadPrivateKey()
             loadAuthorAddress()
+            Task { await fetchProfileIfNeeded() }
+        }
+        .onChange(of: authorAddress) { _, _ in
+            Task { await fetchProfileIfNeeded() }
         }
     }
     
@@ -480,6 +495,7 @@ struct SettingsView: View {
             if let address = authorAddress {
                 // Check approval status when author is loaded
                 checkApprovalIfReady()
+                Task { await fetchProfileIfNeeded() }
             }
         } catch {
             // Handle error silently
@@ -502,6 +518,16 @@ struct SettingsView: View {
         
         Task {
             await commentsService.checkApproval(authorAddress: authorAddr, appAddress: appAddress)
+        }
+    }
+    
+    private func fetchProfileIfNeeded() async {
+        guard let addr = authorAddress else { return }
+        do {
+            let profile = try await authorProfileService.fetch(address: addr)
+            await MainActor.run { self.authorProfile = profile }
+        } catch {
+            // ignore errors
         }
     }
     

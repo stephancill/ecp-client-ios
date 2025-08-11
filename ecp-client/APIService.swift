@@ -361,6 +361,7 @@ struct NotificationEvent: Codable, Identifiable {
     let createdAt: String
     let actorProfile: AuthorProfile?
     let parentProfile: AuthorProfile?
+    let otherActorProfiles: [AuthorProfile]? // up to 10 others for avatar row
 }
 
 // Author profile model mirrored from Indexer API subset

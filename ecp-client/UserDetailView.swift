@@ -39,75 +39,25 @@ struct UserDetailView: View {
     
     // MARK: - Computed Properties
     private var avatarView: some View {
-        Group {
-            if let avatarUrl = avatar, !avatarUrl.isEmpty {
-                CachedAsyncImage(url: URL(string: avatarUrl)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 80, height: 80)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(Color(.separator), lineWidth: 1)
-                            )
-                    case .failure(_):
-                        // Image failed to load, show blockies
-                        BlockiesAvatarView(address: address, size: 80)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color(.separator), lineWidth: 1)
-                            )
-                    case .empty:
-                        ProgressView()
-                            .frame(width: 80, height: 80)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color(.separator), lineWidth: 1)
-                            )
-                    @unknown default:
-                        BlockiesAvatarView(address: address, size: 80)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color(.separator), lineWidth: 1)
-                            )
-                    }
-                }
-            } else {
-                BlockiesAvatarView(address: address, size: 80)
-                    .overlay(
-                        Circle()
-                            .stroke(Color(.separator), lineWidth: 1)
-                    )
-            }
-        }
+        AvatarView(
+            address: address,
+            size: 80,
+            ensAvatarUrl: avatar,
+            farcasterPfpUrl: avatar
+        )
+        .overlay(
+            Circle()
+                .stroke(Color(.separator), lineWidth: 1)
+        )
     }
     
     private var headerAvatarView: some View {
-        Group {
-            if let avatarUrl = avatar, !avatarUrl.isEmpty {
-                CachedAsyncImage(url: URL(string: avatarUrl)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 32, height: 32)
-                            .clipShape(Circle())
-                    case .failure(_):
-                        BlockiesAvatarView(address: address, size: 32)
-                    case .empty:
-                        BlockiesAvatarView(address: address, size: 32)
-                    @unknown default:
-                        BlockiesAvatarView(address: address, size: 32)
-                    }
-                }
-            } else {
-                BlockiesAvatarView(address: address, size: 32)
-            }
-        }
+        AvatarView(
+            address: address,
+            size: 32,
+            ensAvatarUrl: avatar,
+            farcasterPfpUrl: avatar
+        )
     }
     
         var body: some View {

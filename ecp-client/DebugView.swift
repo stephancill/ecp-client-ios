@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct DebugView: View {
     @EnvironmentObject private var authService: AuthService
@@ -83,6 +84,29 @@ struct DebugView: View {
                         }
                         .disabled(authService.isLoading)
                     }
+                }
+            }
+
+            // JWT section separated to keep a single press handler in this section
+            if authService.isAuthenticated, let jwt = authService.getAuthToken() {
+                Section(
+                    header: Text("JWT Token"),
+                    footer: Text("Tap the row to copy the token to clipboard.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                ) {
+                    Button(action: { UIPasteboard.general.string = jwt }) {
+                        HStack(alignment: .top, spacing: 8) {
+                            Text(jwt)
+                                .font(.system(.caption, design: .monospaced))
+                                .lineLimit(4)
+                                .multilineTextAlignment(.leading)
+                            Spacer()
+                            Image(systemName: "doc.on.doc")
+                                .foregroundColor(.blue)
+                        }
+                    }
+                    .accessibilityLabel("Copy JWT Token")
                 }
             }
 
