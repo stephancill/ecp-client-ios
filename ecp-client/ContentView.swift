@@ -56,26 +56,17 @@ struct ContentView: View {
                     .disabled(true)
                 } else {
                     List {
-                        ForEach(commentsService.comments) { comment in
-                            CommentRowView(
-                                comment: comment, 
-                                currentUserAddress: currentUserAddress,
-                                channelsService: channelsService,
-                                onCommentDeleted: {
-                                    // Refresh the comments list after deletion
-                                    commentsService.fetchComments(refresh: true)
-                                }
-                            )
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-                            .onAppear {
-                                // Load more when approaching the end
-                                if comment.id == commentsService.comments.last?.id {
-                                    commentsService.loadMoreCommentsIfNeeded()
-                                }
+                        CommentsList(
+                            comments: commentsService.comments,
+                            currentUserAddress: currentUserAddress,
+                            channelsService: channelsService,
+                            onCommentDeleted: {
+                                commentsService.fetchComments(refresh: true)
+                            },
+                            onAppearLast: {
+                                commentsService.loadMoreCommentsIfNeeded()
                             }
-                        }
+                        )
                         
                         // Loading indicator at bottom
                         if commentsService.isLoadingMore {

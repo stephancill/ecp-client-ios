@@ -17,12 +17,12 @@ struct ParsedContentResult {
 // MARK: - Parsed Content View
 struct ParsedContentView: View {
     let segments: [ContentSegment]
-    let isExpanded: Bool
     let maxLines: Int
-    let maxHeight: CGFloat
     let onUserTap: ((String, String, String) -> Void)?
     @State private var showingImageModal = false
     @State private var selectedImageURL: URL?
+    @State private var isTruncated: Bool = false
+    @State private var forceFullText: Bool = false
     
     // Computed property to separate text and image segments
     private var parsedResult: ParsedContentResult {
@@ -47,26 +47,45 @@ struct ParsedContentView: View {
         return ParsedContentResult(textSegments: textSegments, imageReferences: imageReferences)
     }
     
-    init(segments: [ContentSegment], isExpanded: Bool, maxLines: Int, maxHeight: CGFloat, onUserTap: ((String, String, String) -> Void)? = nil) {
+    init(segments: [ContentSegment], maxLines: Int, onUserTap: ((String, String, String) -> Void)? = nil) {
         self.segments = segments
-        self.isExpanded = isExpanded
         self.maxLines = maxLines
-        self.maxHeight = maxHeight
         self.onUserTap = onUserTap
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Text content
-            Text(.init(createMarkdownText()))
-                .font(.body)
-                .lineLimit(isExpanded ? nil : maxLines)
-                .frame(maxHeight: isExpanded ? nil : maxHeight, alignment: .top)
-                .clipped()
-                .environment(\.openURL, OpenURLAction { url in
-                    handleURLTap(url)
-                    return .handled
-                })
+            // Text content with truncation detection and internal show more/less
+            Group {
+                if forceFullText {
+                    Text(.init(createMarkdownText()))
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    TruncableText(
+                        text: Text(.init(createMarkdownText())),
+                        lineLimit: maxLines
+                    ) { truncated in
+                        isTruncated = truncated
+                    }
+                }
+            }
+            .font(.body)
+            .environment(\.openURL, OpenURLAction { url in
+                handleURLTap(url)
+                return .handled
+            })
+
+            if (isTruncated || forceFullText) {
+                Button(action: {
+                    forceFullText.toggle()
+                }) {
+                    Text(forceFullText ? "Show less" : "Show more")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.blue)
+                }
+                .buttonStyle(.plain)
+            }
             
             // Images below text content
             if !parsedResult.imageReferences.isEmpty {
@@ -200,3 +219,48 @@ struct ParsedContentView: View {
         }
     }
 } 
+
+// MARK: - Truncation Helpers
+// Source: https://www.fivestars.blog/articles/trucated-text/
+struct TruncableText: View {
+    let text: Text
+    let lineLimit: Int?
+    @State private var intrinsicSize: CGSize = .zero
+    @State private var truncatedSize: CGSize = .zero
+    let isTruncatedUpdate: (_ isTruncated: Bool) -> Void
+
+    var body: some View {
+        text
+            .lineLimit(lineLimit)
+            .readSize { size in
+                truncatedSize = size
+                isTruncatedUpdate(truncatedSize != intrinsicSize)
+            }
+            .background(
+                text
+                    .fixedSize(horizontal: false, vertical: true)
+                    .hidden()
+                    .readSize { size in
+                        intrinsicSize = size
+                        isTruncatedUpdate(truncatedSize != intrinsicSize)
+                    }
+            )
+    }
+}
+
+public extension View {
+    func readSize(onChange: @escaping (CGSize) -> Void) -> some View {
+        background(
+            GeometryReader { geometryProxy in
+                Color.clear
+                    .preference(key: SizePreferenceKey.self, value: geometryProxy.size)
+            }
+        )
+        .onPreferenceChange(SizePreferenceKey.self, perform: onChange)
+    }
+}
+
+private struct SizePreferenceKey: PreferenceKey {
+    static var defaultValue: CGSize = .zero
+    static func reduce(value: inout CGSize, nextValue: () -> CGSize) {}
+}

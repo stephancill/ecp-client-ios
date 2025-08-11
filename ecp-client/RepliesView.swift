@@ -66,26 +66,17 @@ struct RepliesView: View {
                 } else {
                     List {
                         // Replies using the same styling as main comments
-                        ForEach(repliesService.comments) { reply in
-                            CommentRowView(
-                                comment: reply, 
-                                currentUserAddress: currentUserAddress,
-                                channelsService: channelsService,
-                                onCommentDeleted: {
-                                    // Refresh the replies list after deletion
-                                    repliesService.fetchComments(refresh: true)
-                                }
-                            )
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-                            .onAppear {
-                                // Load more when approaching the end
-                                if reply.id == repliesService.comments.last?.id {
-                                    repliesService.loadMoreCommentsIfNeeded()
-                                }
+                        CommentsList(
+                            comments: repliesService.comments,
+                            currentUserAddress: currentUserAddress,
+                            channelsService: channelsService,
+                            onCommentDeleted: {
+                                repliesService.fetchComments(refresh: true)
+                            },
+                            onAppearLast: {
+                                repliesService.loadMoreCommentsIfNeeded()
                             }
-                        }
+                        )
                         
                         // Loading indicator at bottom
                         if repliesService.isLoadingMore {
