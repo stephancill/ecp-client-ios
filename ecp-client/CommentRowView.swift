@@ -14,7 +14,7 @@ struct CommentRowView: View {
     let comment: Comment
     let currentUserAddress: String?
     let channelsService: ChannelsService?
-    @State private var isExpanded = false
+    
     @State private var showingRepliesSheet = false
     @State private var showingUserDetailSheet = false
     @State private var showingDeleteConfirmation = false
@@ -36,7 +36,6 @@ struct CommentRowView: View {
     
     // Constants for text truncation
     private let maxLines = 4
-    private let maxHeight: CGFloat = 160 // Approximately 8 lines of text
     
     // Computed property for consistent username display (centralized)
     private var displayUsername: String {
@@ -150,34 +149,19 @@ struct CommentRowView: View {
                 }
             }
             
-            // Content with max height and show more button
+            // Content
             VStack(alignment: .leading, spacing: 8) {
                 let parsedSegments = ContentParser.parseContent(trimmedContent, references: comment.references)
                 
                 ParsedContentView(
                     segments: parsedSegments,
-                    isExpanded: isExpanded,
                     maxLines: maxLines,
-                    maxHeight: maxHeight,
                     onUserTap: { username, displayName, address in
                         showingUserDetailSheet = true
                     }
                 )
                 .foregroundColor(isDeleting ? .gray : .primary)
                 .opacity(isDeleting ? 0.6 : 1.0)
-                
-                // Show more/less button - use trimmed content for length check
-                if shouldShowMoreButton {
-                    Button(action: {
-                        isExpanded.toggle()
-                    }) {
-                        Text(isExpanded ? "Show less" : "Show more")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.blue)
-                    }
-                    .buttonStyle(.plain)
-                }
             }
             
             // References (links, tokens, etc.)
@@ -363,10 +347,7 @@ struct CommentRowView: View {
         }
     }
     
-    // Computed property to determine if we should show the "Show more" button
-    private var shouldShowMoreButton: Bool {
-        return trimmedContent.count > 200 || trimmedContent.components(separatedBy: "\n").count > maxLines
-    }
+    
     
     // Helper function to create unique identifiers for references
     private func getReferenceIdentifier(_ reference: Reference) -> String {
