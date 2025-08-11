@@ -343,14 +343,14 @@ extension ComposeCommentView {
 
             // Build params with minimal content; gas does not depend on text size materially, but use current text
             let parentId: Data? = parentComment != nil ? Data(hex: parentComment!.id) : nil
-            let params = CommentParams(
-                identityAddress: identityAddress,
-                appAddress: appAddress,
-                channelId: 0,
-                content: commentText.isEmpty ? "." : commentText,
-                targetUri: "",
-                parentId: parentId
-            )
+                let params = CommentParams(
+                    identityAddress: identityAddress,
+                    appAddress: appAddress,
+                    channelId: CommentParams.defaultChannelId,
+                    content: commentText.isEmpty ? "." : commentText,
+                    targetUri: "",
+                    parentId: parentId
+                )
 
             // Estimate post cost
             let result = try await commentsService.estimatePostCost(params: params, fromPrivateKey: privateKey)
@@ -406,7 +406,7 @@ extension ComposeCommentView {
                 let commentParams = CommentParams(
                     identityAddress: identityAddress,
                     appAddress: appAddress,
-                    channelId: 0,
+                    channelId: CommentParams.defaultChannelId,
                     content: commentText,
                     targetUri: "",
                     parentId: parentId

@@ -14,9 +14,11 @@ import Web3ContractABI
 
 /// Parameters for creating a comment
 public struct CommentParams {
+    public static let defaultChannelId: BigUInt = BigUInt("114542411055733740143081640674892122728929941592977350431027645332008021396994", radix: 10)!
+
     public let identityAddress: String
     public let appAddress: String
-    public let channelId: UInt64
+    public let channelId: BigUInt
     public let content: String
     public let targetUri: String
     public let deadline: TimeInterval
@@ -26,7 +28,7 @@ public struct CommentParams {
     public init(
         identityAddress: String,
         appAddress: String,
-        channelId: UInt64 = 0,
+        channelId: BigUInt = CommentParams.defaultChannelId,
         content: String,
         targetUri: String = "",
         deadline: TimeInterval? = nil,
@@ -363,7 +365,7 @@ public class CommentsContractService: ObservableObject {
         let commentData = CreateComment(
             author: identityAddr,
             app: appAddr,
-            channelId: BigUInt(integerLiteral: params.channelId),
+            channelId: params.channelId,
             deadline: commentDeadline,
             parentId: parentId,
             commentType: 0,
@@ -463,7 +465,7 @@ public class CommentsContractService: ObservableObject {
         let commentData = CreateComment(
             author: identityAddr,
             app: appAddr,
-            channelId: BigUInt(integerLiteral: params.channelId),
+            channelId: params.channelId,
             deadline: commentDeadline,
             parentId: parentId,
             commentType: 0,
@@ -520,13 +522,13 @@ public class CommentsContractService: ObservableObject {
         let transaction = invocation.createTransaction(
             nonce: nonce,
             gasPrice: gasPrice,
-            maxFeePerGas: nil,
-            maxPriorityFeePerGas: nil,
+            maxFeePerGas: Optional<EthereumQuantity>.none,
+            maxPriorityFeePerGas: Optional<EthereumQuantity>.none,
             gasLimit: estimatedGas,
             from: ethPrivateKey.address,
             value: 0,
             accessList: [:],
-            transactionType: .legacy
+            transactionType: EthereumTransaction.TransactionType.legacy
         )
         
         guard let signedTransaction = try transaction?.sign(with: ethPrivateKey, chainId: 8453) else {
@@ -566,7 +568,7 @@ public class CommentsContractService: ObservableObject {
         let commentData = CreateComment(
             author: identityAddr,
             app: appAddr,
-            channelId: BigUInt(integerLiteral: params.channelId),
+            channelId: params.channelId,
             deadline: commentDeadline,
             parentId: commentParentId,
             commentType: 0, // Standard comment type
@@ -670,13 +672,13 @@ public class CommentsContractService: ObservableObject {
         let transaction = invocation.createTransaction(
             nonce: nonce,
             gasPrice: gasPrice,
-            maxFeePerGas: nil,
-            maxPriorityFeePerGas: nil,
+            maxFeePerGas: Optional<EthereumQuantity>.none,
+            maxPriorityFeePerGas: Optional<EthereumQuantity>.none,
             gasLimit: estimatedGas,
             from: ethPrivateKey.address,
             value: 0,
             accessList: [:],
-            transactionType: .legacy
+            transactionType: EthereumTransaction.TransactionType.legacy
         )
         
         guard let signedTransaction = try transaction?.sign(with: ethPrivateKey, chainId: 8453) else {
