@@ -25,10 +25,11 @@ town is an iOS app that lets you post comments to the Ethereum Comments Protocol
    - See [SECURITY_SETUP.md](SECURITY_SETUP.md) for security configuration
 
 3. **Build with personal configuration:**
+
    ```bash
    # Use the build script for personal development
    ./build-personal.sh
-   
+
    # Or open in Xcode (may require manual configuration)
    open ecp-client.xcodeproj
    ```
