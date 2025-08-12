@@ -110,12 +110,16 @@ app.get(
         ? await fetchBatchCachedUserData({ authors: addressList })
         : {};
 
-      const toJsonSafe = (obj: any) =>
-        JSON.parse(
+      // Safely convert objects to JSON-serializable by stringifying BigInts.
+      // Guard against undefined, because JSON.parse(undefined) throws.
+      const toJsonSafe = (obj: any) => {
+        if (typeof obj === "undefined") return undefined;
+        return JSON.parse(
           JSON.stringify(obj, (_k, v) =>
             typeof v === "bigint" ? v.toString() : v
           )
         );
+      };
 
       type EnrichedEvent = ReturnType<typeof toJsonSafe> & {
         id: string;
