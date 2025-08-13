@@ -74,3 +74,11 @@ struct ContentView: View {
 - Extract reusable components (skeleton views, chips, etc.)
 - Use computed properties for complex view logic
 - Keep view body methods focused and readable
+
+## Development
+
+In development, whenever you compile the app, you should pipe the xcodebuild to xcpretty.
+
+```sh
+xcodebuild [flags] | xcpretty
+```
