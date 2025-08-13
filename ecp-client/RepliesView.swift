@@ -17,10 +17,12 @@ struct RepliesView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var currentUserAddress: String?
     @State private var showingComposeModal = false
+    @State private var replyTarget: Comment?
     
     init(parentComment: Comment) {
         self.parentComment = parentComment
         self._repliesService = StateObject(wrappedValue: CommentsService(serviceType: .replies(parentId: parentComment.id)))
+        self._replyTarget = State(initialValue: parentComment)
     }
     
     var body: some View {
@@ -75,6 +77,10 @@ struct RepliesView: View {
                             },
                             onAppearLast: {
                                 repliesService.loadMoreCommentsIfNeeded()
+                            },
+                            onReplyTapped: { tapped in
+                                replyTarget = tapped
+                                showingComposeModal = true
                             }
                         )
                         
@@ -129,7 +135,7 @@ struct RepliesView: View {
         .sheet(isPresented: $showingComposeModal) {
             ComposeCommentView(
                 identityService: identityService,
-                parentComment: parentComment,
+                parentComment: replyTarget ?? parentComment,
                 onCommentPosted: {
                     // Refresh the replies when comment is posted
                     repliesService.fetchComments(refresh: true)

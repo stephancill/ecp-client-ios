@@ -17,6 +17,7 @@ struct CommentDetailView: View {
     @State private var replies: [Comment] = []
     @State private var isLoading: Bool = false
     @State private var errorMessage: String?
+    @State private var selectedCommentForReplies: Comment?
 
     var body: some View {
         List {
@@ -52,7 +53,8 @@ struct CommentDetailView: View {
                     CommentsList(
                         comments: [main],
                         currentUserAddress: nil,
-                        channelsService: nil
+                        channelsService: nil,
+                        onReplyTapped: { c in selectedCommentForReplies = c }
                     )
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
@@ -73,7 +75,8 @@ struct CommentDetailView: View {
                     CommentsList(
                         comments: replies,
                         currentUserAddress: nil,
-                        channelsService: nil
+                        channelsService: nil,
+                        onReplyTapped: { c in selectedCommentForReplies = c }
                     )
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
@@ -85,6 +88,11 @@ struct CommentDetailView: View {
         .navigationTitle("Comment")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { Task { await loadThread() } }
+        .sheet(item: $selectedCommentForReplies) { comment in
+            RepliesView(parentComment: comment)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
         .alert("Error", isPresented: .constant(errorMessage != nil)) {
             Button("OK") { errorMessage = nil }
         } message: {

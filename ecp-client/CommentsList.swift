@@ -13,6 +13,7 @@ struct CommentsList: View {
     let channelsService: ChannelsService?
     var onCommentDeleted: (() -> Void)? = nil
     var onAppearLast: (() -> Void)? = nil
+    var onReplyTapped: ((Comment) -> Void)? = nil
 
     var body: some View {
         ForEach(comments) { comment in
@@ -21,7 +22,8 @@ struct CommentsList: View {
                     comment: comment,
                     currentUserAddress: currentUserAddress,
                     channelsService: channelsService,
-                    onCommentDeleted: onCommentDeleted
+                    onCommentDeleted: onCommentDeleted,
+                    onReplyTapped: onReplyTapped
                 )
                 Divider()
                     .background(Color(.separator))

@@ -23,6 +23,7 @@ struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var deepLinkService: DeepLinkService
     @State private var presentedDetailRoute: DeepLinkService.Route?
+    @State private var selectedCommentForReplies: Comment?
     
     var body: some View {
         NavigationView {
@@ -65,6 +66,9 @@ struct ContentView: View {
                             },
                             onAppearLast: {
                                 commentsService.loadMoreCommentsIfNeeded()
+                            },
+                            onReplyTapped: { comment in
+                                selectedCommentForReplies = comment
                             }
                         )
                         
@@ -171,6 +175,11 @@ struct ContentView: View {
             )
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $selectedCommentForReplies) { comment in
+            RepliesView(parentComment: comment)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingSettingsModal, onDismiss: {
             // Reload identity address when settings sheet closes
