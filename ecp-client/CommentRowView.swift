@@ -15,7 +15,6 @@ struct CommentRowView: View {
     let currentUserAddress: String?
     let channelsService: ChannelsService?
     
-    @State private var showingRepliesSheet = false
     @State private var showingUserDetailSheet = false
     @State private var showingDeleteConfirmation = false
     @State private var isDeleting = false
@@ -26,12 +25,21 @@ struct CommentRowView: View {
     
     // Callback for when comment is deleted
     var onCommentDeleted: (() -> Void)?
+    // Callback when user taps reply; presentation handled by parent for stability
+    var onReplyTapped: ((Comment) -> Void)? = nil
     
-    init(comment: Comment, currentUserAddress: String? = nil, channelsService: ChannelsService? = nil, onCommentDeleted: (() -> Void)? = nil) {
+    init(
+        comment: Comment,
+        currentUserAddress: String? = nil,
+        channelsService: ChannelsService? = nil,
+        onCommentDeleted: (() -> Void)? = nil,
+        onReplyTapped: ((Comment) -> Void)? = nil
+    ) {
         self.comment = comment
         self.currentUserAddress = currentUserAddress
         self.channelsService = channelsService
         self.onCommentDeleted = onCommentDeleted
+        self.onReplyTapped = onReplyTapped
     }
     
     // Constants for text truncation
@@ -202,7 +210,7 @@ struct CommentRowView: View {
                 Button(action: {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                     impactFeedback.impactOccurred()
-                    showingRepliesSheet = true
+                    onReplyTapped?(comment)
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "arrowshape.turn.up.left")
@@ -225,11 +233,6 @@ struct CommentRowView: View {
         .onAppear {
             // Load channel information if channelsService is available
             loadChannelInfo()
-        }
-        .sheet(isPresented: $showingRepliesSheet) {
-            RepliesView(parentComment: comment)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingUserDetailSheet) {
             UserDetailView(
