@@ -18,6 +18,7 @@ struct RepliesView: View {
     @State private var currentUserAddress: String?
     @State private var showingComposeModal = false
     @State private var replyTarget: Comment?
+    @State private var composePresentationDetents: Set<PresentationDetent> = [.medium, .large]
     
     init(parentComment: Comment) {
         self.parentComment = parentComment
@@ -139,9 +140,10 @@ struct RepliesView: View {
                 onCommentPosted: {
                     // Refresh the replies when comment is posted
                     repliesService.fetchComments(refresh: true)
-                }
+                },
+                presentationDetents: $composePresentationDetents
             )
-            .presentationDetents([.medium, .large])
+            .presentationDetents(composePresentationDetents)
             .presentationDragIndicator(.visible)
         }
         .onAppear {
