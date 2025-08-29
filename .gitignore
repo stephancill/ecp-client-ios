@@ -34,5 +34,7 @@ xcuserdata/*/xcschemes/xcschememanagement.plist
 **/project.xcworkspace/xcuserdata/
 
 # iOS App Configuration (contains secrets)
-Info.plist
+ecp-client/Info.plist
 UserConfig.xcconfig
+
+.env

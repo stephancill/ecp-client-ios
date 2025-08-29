@@ -30,15 +30,19 @@ struct ComposeCommentView: View {
     @State private var identityAddress: String? = nil
     @State private var authorProfile: AuthorProfile? = nil
     @Environment(\.colorScheme) private var colorScheme
-    
+    @State private var keyboardHeight: CGFloat = 0
+    @State private var scrollViewProxy: ScrollViewProxy?
+
     let identityService: IdentityService
     let parentComment: Comment?
     var onCommentPosted: (() -> Void)?
+    @Binding var presentationDetents: Set<PresentationDetent>
     
-    init(identityService: IdentityService, parentComment: Comment? = nil, onCommentPosted: (() -> Void)? = nil) {
+    init(identityService: IdentityService, parentComment: Comment? = nil, onCommentPosted: (() -> Void)? = nil, presentationDetents: Binding<Set<PresentationDetent>>) {
         self.identityService = identityService
         self.parentComment = parentComment
         self.onCommentPosted = onCommentPosted
+        self._presentationDetents = presentationDetents
         // Seed identity address synchronously to avoid placeholder flash
         if let addr = try? KeychainManager.retrieveIdentityAddress() {
             self._identityAddress = State(initialValue: addr)
@@ -50,203 +54,212 @@ struct ComposeCommentView: View {
     
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 16) {
-                if identityService.isIdentityConfigured {
-                    // Insufficient funds banner
-                    if !hasSufficientBalance {
-                        InfoBannerView(
-                            iconSystemName: "creditcard.trianglebadge.exclamation",
-                            iconBackgroundColor: .orange.opacity(0.15),
-                            iconForegroundColor: .orange,
-                            title: "Insufficient funds",
-                            subtitle: "Fund your app account to post."
-                                + (balanceService.balance.isEmpty ? "" : " Balance: \(balanceService.balance)"),
-                            buttonTitle: "Fund",
-                            buttonAction: { showingSettings = true }
-                        )
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.orange.opacity(0.08))
-                        )
+            ScrollView {
+                ScrollViewReader { proxy in
+                    VStack(alignment: .leading, spacing: 16) {
+                        Color.clear
+                            .frame(height: 0)
+                            .id("top")
+                            .onAppear {
+                                scrollViewProxy = proxy
+                            }
+                    if identityService.isIdentityConfigured {
+                        // Insufficient funds banner
+                        if !hasSufficientBalance {
+                            InfoBannerView(
+                                iconSystemName: "creditcard.trianglebadge.exclamation",
+                                iconBackgroundColor: .orange.opacity(0.15),
+                                iconForegroundColor: .orange,
+                                title: "Insufficient funds",
+                                subtitle: "Fund your app account to post."
+                                    + (balanceService.balance.isEmpty ? "" : " Balance: \(balanceService.balance)"),
+                                buttonTitle: "Fund",
+                                buttonAction: { showingSettings = true }
+                            )
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.orange.opacity(0.08))
+                            )
+                        }
                     }
-                }
-                if identityService.isCheckingIdentity {
-                    loadingView
-                } else if !identityService.isIdentityConfigured {
-                    configurationRequiredView  
-                } else {
-                    // Identity configured - show normal compose interface
-                    
-                    // Reply context (if replying to a comment)
-                    if let parentComment = parentComment {
-                        replyContextView(for: parentComment)
-                    }
-                    
-                    // Text Editor with Avatar
-                    HStack(alignment: .top, spacing: 12) {
-                        if let addr = identityAddress {
-                            // Prefer cached/fetched profile; if none yet, show neutral placeholder to avoid blockies flash
-                            let cached = AuthorProfileService.shared.cachedProfile(for: addr)
-                            if let profile = (authorProfile ?? cached) {
-                                AvatarView(
-                                    address: addr,
-                                    size: 40,
-                                    ensAvatarUrl: profile.ens?.avatarUrl,
-                                    farcasterPfpUrl: profile.farcaster?.pfpUrl
-                                )
+                    if identityService.isCheckingIdentity {
+                        loadingView
+                    } else if !identityService.isIdentityConfigured {
+                        configurationRequiredView
+                    } else {
+                        // Identity configured - show normal compose interface
+
+                        // Reply context (if replying to a comment)
+                        if let parentComment = parentComment {
+                            replyContextView(for: parentComment)
+                        }
+
+                        // Text Editor with Avatar
+                        HStack(alignment: .top, spacing: 12) {
+                            if let addr = identityAddress {
+                                // Prefer cached/fetched profile; if none yet, show neutral placeholder to avoid blockies flash
+                                let cached = AuthorProfileService.shared.cachedProfile(for: addr)
+                                if let profile = (authorProfile ?? cached) {
+                                    AvatarView(
+                                        address: addr,
+                                        size: 40,
+                                        ensAvatarUrl: profile.ens?.avatarUrl,
+                                        farcasterPfpUrl: profile.farcaster?.pfpUrl
+                                    )
+                                } else {
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: 40, height: 40)
+                                }
                             } else {
                                 Circle()
                                     .fill(Color.gray.opacity(0.3))
                                     .frame(width: 40, height: 40)
+                                    .overlay(
+                                        Image(systemName: "person.fill")
+                                            .foregroundColor(.gray)
+                                    )
                             }
-                        } else {
-                            Circle()
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 40, height: 40)
-                                .overlay(
-                                    Image(systemName: "person.fill")
-                                        .foregroundColor(.gray)
-                                )
-                        }
-                        
-                        // Text Editor
-                        ZStack(alignment: .topLeading) {
-                            TextEditor(text: $commentText)
-                                .font(.body)
-                                .frame(minHeight: 80)
-                            
-                            if commentText.isEmpty {
-                                Text(parentComment != nil ? "Write your reply..." : "What's your take?")
-                                    .foregroundColor(.secondary)
+
+                                                        // Text Editor
+                            ZStack(alignment: .topLeading) {
+                                TextEditor(text: $commentText)
                                     .font(.body)
-                                    .padding(.top, 8)
-                                    .padding(.leading, 4)
-                                    .allowsHitTesting(false)
-                            }
-                        }
-                    }
-                    
-                    // Image Selection - Grid for 3 or fewer, Carousel for more
-                    if !selectedImages.isEmpty {
-                        if selectedImages.count <= 3 {
-                            // Grid layout for 3 or fewer images
-                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                                ForEach(Array(selectedImages.enumerated()), id: \.offset) { index, image in
-                                    imageView(for: image, at: index)
+                                    .frame(minHeight: 80)
+                                    .id("textEditor") // Add ID for scrolling
+
+                                if commentText.isEmpty {
+                                    Text(parentComment != nil ? "Write your reply..." : "What's your take?")
+                                        .foregroundColor(.secondary)
+                                        .font(.body)
+                                        .padding(.top, 8)
+                                        .padding(.leading, 4)
+                                        .allowsHitTesting(false)
                                 }
                             }
-                        } else {
-                            // Horizontal carousel for more than 3 images
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
+                        }
+
+                        // Image Selection - Grid for 3 or fewer, Carousel for more
+                        if !selectedImages.isEmpty {
+                            if selectedImages.count <= 3 {
+                                // Grid layout for 3 or fewer images
+                                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                                     ForEach(Array(selectedImages.enumerated()), id: \.offset) { index, image in
                                         imageView(for: image, at: index)
-                                            .frame(width: 120, height: 120)
                                     }
                                 }
-                                .padding(.horizontal, 4)
+                            } else {
+                                // Horizontal carousel for more than 3 images
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(Array(selectedImages.enumerated()), id: \.offset) { index, image in
+                                            imageView(for: image, at: index)
+                                                .frame(width: 120, height: 120)
+                                        }
+                                    }
+                                    .padding(.horizontal, 4)
+                                }
                             }
                         }
-                    }
-                    
-                    // Image Upload Progress
-                    if imageUploadService.isUploading {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                                Text(selectedImages.count > 1 ? "Uploading images..." : "Uploading image...")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                Text("\(Int(imageUploadService.uploadProgress * 100))%")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+
+                        // Image Upload Progress
+                        if imageUploadService.isUploading {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                    Text(selectedImages.count > 1 ? "Uploading images..." : "Uploading image...")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    Text("\(Int(imageUploadService.uploadProgress * 100))%")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+
+                                ProgressView(value: imageUploadService.uploadProgress)
+                                    .progressViewStyle(LinearProgressViewStyle())
                             }
-                            
-                            ProgressView(value: imageUploadService.uploadProgress)
-                                .progressViewStyle(LinearProgressViewStyle())
+                        }
+
+                        // Character Count and Image Upload
+                        HStack {
+                            // Image Picker Button
+                            PhotosPicker(selection: $selectedPhotos, matching: .images) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "photo.fill")
+                                        .font(.system(size: 16, weight: .medium))
+                                }
+                                .foregroundColor(.gray)
+                                .padding(.vertical, 6)
+
+                            }
+                            .disabled(imageUploadService.isUploading || selectedImages.count >= maxImages)
+
+                             Spacer()
+
+                             // Character Count
+                             Text("\(commentText.count)/500")
+                                 .font(.caption)
+                                 .foregroundColor(commentText.count > 500 ? .red : .secondary)
                         }
                     }
-                    
-                    // Character Count and Image Upload
-                    HStack {
-                        // Image Picker Button
-                        PhotosPicker(selection: $selectedPhotos, matching: .images) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "photo.fill")
-                                    .font(.system(size: 16, weight: .medium))
-                            }
-                            .foregroundColor(.gray)
-                            .padding(.vertical, 6)
-                            
+
+                    // Error Message
+                    if let errorMessage = errorMessage {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.red)
+                            Text(errorMessage)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                            Spacer()
                         }
-                        .disabled(imageUploadService.isUploading || selectedImages.count >= maxImages)
-                        
-                         Spacer()
-                        
-                         // Character Count
-                         Text("\(commentText.count)/500")
-                             .font(.caption)
-                             .foregroundColor(commentText.count > 500 ? .red : .secondary)
+                        .padding(.horizontal, 4)
                     }
-                }
-                
-                // Error Message
-                if let errorMessage = errorMessage {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.red)
-                        Text(errorMessage)
-                            .font(.caption)
-                            .foregroundColor(.red)
-                        Spacer()
+
+                    // Image upload error
+                    if let uploadError = imageUploadService.uploadError {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.red)
+                            Text(uploadError)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 4)
                     }
-                    .padding(.horizontal, 4)
-                }
-                
-                // Image upload error
-                if let uploadError = imageUploadService.uploadError {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.red)
-                        Text(uploadError)
-                            .font(.caption)
-                            .foregroundColor(.red)
-                        Spacer()
+
+                    // Polling Status
+                    if pollingService.isPolling {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Waiting for comment to appear...")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 4)
                     }
-                    .padding(.horizontal, 4)
-                }
-                
-                // Polling Status
-                if pollingService.isPolling {
-                    HStack {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                        Text("Waiting for comment to appear...")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
+
+                    // Polling Error
+                    if let pollingError = pollingService.pollingError {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                            Text(pollingError)
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 4)
                     }
-                    .padding(.horizontal, 4)
-                }
-                
-                // Polling Error
-                if let pollingError = pollingService.pollingError {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
-                        Text(pollingError)
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                        Spacer()
                     }
-                    .padding(.horizontal, 4)
+                    .padding(20)
                 }
-                
-                Spacer()
             }
-            .padding(20)
             .navigationTitle(parentComment != nil ? "Reply" : "New Comment")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -267,6 +280,27 @@ struct ComposeCommentView: View {
                         .disabled(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling || !hasSufficientBalance)
                         .opacity(commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || commentText.count > 500 || isPosting || pollingService.isPolling || !hasSufficientBalance ? 0.6 : 1.0)
                     }
+                }
+            }
+        }
+        .ignoresSafeArea(.keyboard) // Prevent keyboard from pushing content up
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardHeight = keyboardFrame.height
+                // Scroll to text editor when keyboard appears
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation {
+                        scrollViewProxy?.scrollTo("textEditor", anchor: .bottom)
+                    }
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardHeight = 0
+            // Scroll back to top when keyboard disappears
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation {
+                    scrollViewProxy?.scrollTo("top", anchor: .top)
                 }
             }
         }
@@ -297,16 +331,33 @@ struct ComposeCommentView: View {
                 }
             }
         }
+        .onChange(of: commentText) { newText in
+            // Scroll to text editor when user is typing (if keyboard is visible)
+            if keyboardHeight > 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    withAnimation {
+                        scrollViewProxy?.scrollTo("textEditor", anchor: .bottom)
+                    }
+                }
+            }
+        }
         .onChange(of: selectedPhotos) { newPhotos in
             Task {
                 // Clear existing images first
                 await MainActor.run {
                     selectedImages.removeAll()
                 }
-                
+
+                // If photos are being added (not removed), expand to full height
+                if !newPhotos.isEmpty {
+                    await MainActor.run {
+                        presentationDetents = [.large]
+                    }
+                }
+
                 // Process new photos (limit to maxImages)
                 let photosToProcess = Array(newPhotos.prefix(maxImages))
-                
+
                 for photo in photosToProcess {
                     do {
                         if let data = try await photo.loadTransferable(type: Data.self) {
@@ -662,5 +713,5 @@ extension ComposeCommentView {
 
 
 #Preview {
-    ComposeCommentView(identityService: IdentityService(), parentComment: nil)
+    ComposeCommentView(identityService: IdentityService(), parentComment: nil, presentationDetents: .constant([.medium, .large]))
 } 

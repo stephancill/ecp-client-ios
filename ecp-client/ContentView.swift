@@ -24,6 +24,7 @@ struct ContentView: View {
     @EnvironmentObject private var deepLinkService: DeepLinkService
     @State private var presentedDetailRoute: DeepLinkService.Route?
     @State private var selectedCommentForReplies: Comment?
+    @State private var composePresentationDetents: Set<PresentationDetent> = [.medium, .large]
     
     var body: some View {
         NavigationView {
@@ -171,9 +172,10 @@ struct ContentView: View {
                     Task {
                         await commentsService.refreshComments()
                     }
-                }
+                },
+                presentationDetents: $composePresentationDetents
             )
-            .presentationDetents([.medium, .large])
+            .presentationDetents(composePresentationDetents)
             .presentationDragIndicator(.visible)
         }
         .sheet(item: $selectedCommentForReplies) { comment in
