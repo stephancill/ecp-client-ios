@@ -373,58 +373,6 @@ struct SettingsView: View {
                 Section(
                     header: Text("Debug")
                 ) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        // API Base URL
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("API Base URL")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .textCase(.uppercase)
-
-                            HStack {
-                                Text(AppConfiguration.shared.baseURL)
-                                    .font(.system(.body, design: .monospaced))
-                                    .textSelection(.enabled)
-                                    .foregroundColor(.primary)
-
-                                Spacer()
-
-                                Button(action: {
-                                    UIPasteboard.general.string = AppConfiguration.shared.baseURL
-                                }) {
-                                    Image(systemName: "doc.on.doc")
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                        }
-
-                        // Pinata Gateway URL
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Pinata Gateway URL")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .textCase(.uppercase)
-
-                            HStack {
-                                Text(AppConfiguration.shared.pinataGatewayURL)
-                                    .font(.system(.body, design: .monospaced))
-                                    .textSelection(.enabled)
-                                    .foregroundColor(.primary)
-
-                                Spacer()
-
-                                Button(action: {
-                                    UIPasteboard.general.string = AppConfiguration.shared.pinataGatewayURL
-                                }) {
-                                    Image(systemName: "doc.on.doc")
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                        }
-                    }
-
-                    Divider()
-
                     NavigationLink(destination: DebugView()) {
                         HStack {
                             Image(systemName: "wrench.and.screwdriver")
